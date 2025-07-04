@@ -6,7 +6,7 @@ st.image("sca_logo.jpg", use_container_width=True)
 st.markdown("### Nitrogen Budget Calculator – South Coastal Agencies")
 
 # --- Agronomic Inputs ---
-st.header("1. Agronomic Inputs")
+st.header("1. Yield Expectations")
 crop_type = st.selectbox("Crop Type", ["Wheat", "Barley", "Oats", "Canola"])
 
 # Set label and default value based on crop type
@@ -67,4 +67,4 @@ st.metric("In-season N Required (kg/ha)", f"{in_season_n:.1f}")
 
 # --- Footer ---
 st.markdown("---")
-st.caption("Developed in collaboration with South Coastal Agencies & Nutrien Ag Solutions")
+st.caption("Developed in collaboration with South Coastal Agencies")
