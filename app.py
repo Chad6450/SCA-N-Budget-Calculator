@@ -36,7 +36,7 @@ with col4:
 organic_n = st.number_input("Organic N Pool (kg/ha)", min_value=0.0, value=1560.0)
 
 # --- Rainfall Data Placeholder ---
-st.header("3. Rainfall (Example Placeholder)")
+st.header("3. Rainfall ")
 station_code = st.text_input("Enter DPIRD Station Code", value="ESP")
 
 @st.cache_data
