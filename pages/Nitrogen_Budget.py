@@ -3,6 +3,8 @@ import pandas as pd
 from fpdf import FPDF
 import base64
 from io import BytesIO
+import matplotlib.pyplot as plt
+import os
 
 # --- Branding ---
 st.image("sca_logo.jpg", use_container_width=True)
@@ -50,7 +52,8 @@ def get_rainfall(code):
     }
 
 rain = get_rainfall(station_code)
-st.write(pd.DataFrame.from_dict(rain, orient="index", columns=["Rainfall (mm)"]))
+rain_df = pd.DataFrame.from_dict(rain, orient="index", columns=["Rainfall (mm)"]).sort_index()
+st.write(rain_df)
 
 # --- Calculations ---
 n_per_tonne = 25.0
@@ -102,13 +105,16 @@ with col6:
 # --- PDF Export ---
 class PDF(FPDF):
     def header(self):
+        self.image("sca_logo.jpg", 10, 8, 33)
         self.set_font("Arial", 'B', 12)
         self.cell(0, 10, "Nitrogen Budget Report", ln=True, align='C')
-        self.ln(10)
+        self.ln(20)
 
     def chapter_title(self, title):
         self.set_font("Arial", 'B', 10)
         self.cell(0, 10, title, ln=True)
+        self.line(10, self.get_y(), 200, self.get_y())
+        self.ln(4)
 
     def chapter_body(self, text):
         self.set_font("Arial", '', 10)
@@ -128,6 +134,20 @@ if st.button("📄 Download PDF Report"):
     pdf.chapter_title("3. Rainfall")
     pdf.chapter_body(f"Station: {station_code}\nRainfall: {rain}")
 
+    # Create rainfall graph
+    plt.figure(figsize=(4, 2.5))
+    plt.bar(rain_df.index, rain_df["Rainfall (mm)"])
+    plt.title(f"Rainfall at {station_code}")
+    plt.ylabel("mm")
+    plt.tight_layout()
+    img_buffer = BytesIO()
+    plt.savefig(img_buffer, format='png')
+    img_buffer.seek(0)
+    with open("temp_rain_chart.png", "wb") as f:
+        f.write(img_buffer.read())
+    plt.close()
+    pdf.image("temp_rain_chart.png", x=10, w=180)
+
     pdf.chapter_title("4. Nitrogen Summary")
     pdf.chapter_body(f"Total N Required: {n_total_required:.1f} kg/ha\nSoil N Contribution: {soil_n:.1f} kg/ha\nIn-season N Required: {in_season_n:.1f} kg/ha")
 
@@ -140,12 +160,13 @@ if st.button("📄 Download PDF Report"):
         f"UAN Cost: ${uan_total_cost:.2f}/ha | Break-even Yield: {uan_break_even_kg:.0f} kg/ha"
     )
 
-    # Export as download link
-    buffer = BytesIO()
-    pdf.output(buffer)
-    b64 = base64.b64encode(buffer.getvalue()).decode()
+    pdf_data = pdf.output(dest='S').encode('latin1')
+    b64 = base64.b64encode(pdf_data).decode()
     href = f'<a href="data:application/octet-stream;base64,{b64}" download="Nitrogen_Budget_Report.pdf">📥 Click here to download PDF</a>'
     st.markdown(href, unsafe_allow_html=True)
+
+    # Clean up temp chart image
+    os.remove("temp_rain_chart.png")
 
 # --- Footer ---
 st.markdown("---")
