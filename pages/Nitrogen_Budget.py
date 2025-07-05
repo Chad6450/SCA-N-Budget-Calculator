@@ -7,10 +7,11 @@ import matplotlib.pyplot as plt
 import os
 
 # --- Branding ---
-st.image("sca_logo.jpg", use_container_width=True)
+st.image("sca_logo.jpg", width=150)  # Make logo larger
 st.markdown("### Nitrogen Budget Calculator – South Coastal Agencies")
 
 # --- Agronomic Inputs ---
+st.markdown("---")  # Reduced spacing above this header
 st.header("1. Yield Expectations")
 crop_type = st.selectbox("Crop Type", ["Wheat", "Barley", "Oats", "Canola"])
 
@@ -66,13 +67,13 @@ soil_n += organic_n * 0.03
 in_season_n = max((n_total_required - soil_n) / nue, 0)
 
 # --- Output Summary ---
-st.header("📊 Nitrogen Budget Summary")
+st.header("\U0001F4CA Nitrogen Budget Summary")
 st.metric("Total N Required (kg/ha)", f"{n_total_required:.1f}")
 st.metric("Soil N Contribution (kg/ha)", f"{soil_n:.1f}")
 st.metric("In-season N Required (kg/ha)", f"{in_season_n:.1f}")
 
 # --- ROI & Break-Even Calculator ---
-st.header("💰 Return on Investment")
+st.header("\U0001F4B0 Return on Investment")
 
 grain_price = st.number_input("Grain Price ($/t)", min_value=0.0, value=400.0, step=10.0)
 urea_price = st.number_input("Urea Price ($/t)", min_value=0.0, value=950.0, step=10.0)
@@ -91,7 +92,7 @@ urea_break_even_kg = urea_total_cost / grain_price_per_kg
 uan_break_even_kg = uan_total_cost / grain_price_per_kg
 
 # --- ROI Output ---
-st.subheader("📈 ROI Comparison")
+st.subheader("\U0001F4C8 ROI Comparison")
 col5, col6 = st.columns(2)
 with col5:
     st.metric("Urea N Cost ($/kg N)", f"${urea_n_cost:.2f}")
@@ -105,10 +106,11 @@ with col6:
 # --- PDF Export ---
 class PDF(FPDF):
     def header(self):
-        self.image("sca_logo.jpg", 10, 8, 33)
+        self.image("sca_logo.jpg", x=70, y=8, w=70)  # Bigger and centered
         self.set_font("Arial", 'B', 12)
+        self.set_y(35)
         self.cell(0, 10, "Nitrogen Budget Report", ln=True, align='C')
-        self.ln(20)
+        self.ln(8)
 
     def chapter_title(self, title):
         self.set_font("Arial", 'B', 10)
@@ -121,7 +123,16 @@ class PDF(FPDF):
         self.multi_cell(0, 8, text)
         self.ln()
 
-if st.button("📄 Download PDF Report"):
+    def boxed_text(self, title, content):
+        self.set_font("Arial", 'B', 11)
+        self.set_fill_color(240, 240, 240)
+        y = self.get_y()
+        self.rect(10, y, 190, 30)
+        self.set_xy(12, y + 2)
+        self.multi_cell(0, 8, f"{title}\n{content}")
+        self.ln(10)
+
+if st.button("\U0001F4C4 Download PDF Report"):
     pdf = PDF()
     pdf.add_page()
 
@@ -135,10 +146,12 @@ if st.button("📄 Download PDF Report"):
     pdf.chapter_body(f"Station: {station_code}\nRainfall: {rain}")
 
     # Create rainfall graph
-    plt.figure(figsize=(4, 2.5))
+    plt.figure(figsize=(3.5, 1.5))
     plt.bar(rain_df.index, rain_df["Rainfall (mm)"])
-    plt.title(f"Rainfall at {station_code}")
-    plt.ylabel("mm")
+    plt.title(f"Rainfall at {station_code}", fontsize=9)
+    plt.ylabel("mm", fontsize=8)
+    plt.xticks(fontsize=8)
+    plt.yticks(fontsize=8)
     plt.tight_layout()
     img_buffer = BytesIO()
     plt.savefig(img_buffer, format='png')
@@ -146,23 +159,31 @@ if st.button("📄 Download PDF Report"):
     with open("temp_rain_chart.png", "wb") as f:
         f.write(img_buffer.read())
     plt.close()
-    pdf.image("temp_rain_chart.png", x=10, w=180)
+    pdf.image("temp_rain_chart.png", x=50, w=100)  # Smaller and centered
+
+    pdf.add_page()
 
     pdf.chapter_title("4. Nitrogen Summary")
-    pdf.chapter_body(f"Total N Required: {n_total_required:.1f} kg/ha\nSoil N Contribution: {soil_n:.1f} kg/ha\nIn-season N Required: {in_season_n:.1f} kg/ha")
+    pdf.set_font("Arial", 'B', 12)
+    pdf.set_fill_color(230, 230, 250)
+    pdf.multi_cell(0, 10, f"Total N Required: {n_total_required:.1f} kg/ha\nSoil N Contribution: {soil_n:.1f} kg/ha\nIn-season N Required: {in_season_n:.1f} kg/ha", border=1)
+    pdf.ln(5)
 
     pdf.chapter_title("5. ROI Assumptions & Break-even Analysis")
-    pdf.chapter_body(
+    pdf.set_font("Arial", 'B', 12)
+    pdf.set_fill_color(230, 230, 250)
+    pdf.multi_cell(0, 10,
         f"Grain Price: ${grain_price}/t\n"
         f"Urea Price: ${urea_price}/t (46% N)\n"
         f"UAN Price: ${uan_price}/t (32% N)\n\n"
         f"Urea Cost: ${urea_total_cost:.2f}/ha | Break-even Yield: {urea_break_even_kg:.0f} kg/ha\n"
-        f"UAN Cost: ${uan_total_cost:.2f}/ha | Break-even Yield: {uan_break_even_kg:.0f} kg/ha"
+        f"UAN Cost: ${uan_total_cost:.2f}/ha | Break-even Yield: {uan_break_even_kg:.0f} kg/ha",
+        border=1
     )
 
     pdf_data = pdf.output(dest='S').encode('latin1')
     b64 = base64.b64encode(pdf_data).decode()
-    href = f'<a href="data:application/octet-stream;base64,{b64}" download="Nitrogen_Budget_Report.pdf">📥 Click here to download PDF</a>'
+    href = f'<a href="data:application/octet-stream;base64,{b64}" download="Nitrogen_Budget_Report.pdf">\U0001F4C5 Click here to download PDF</a>'
     st.markdown(href, unsafe_allow_html=True)
 
     # Clean up temp chart image
