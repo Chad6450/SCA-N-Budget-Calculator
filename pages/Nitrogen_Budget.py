@@ -183,7 +183,7 @@ if st.button("\U0001F4C4 Download PDF Report"):
 
     pdf_data = pdf.output(dest='S').encode('latin1')
     b64 = base64.b64encode(pdf_data).decode()
-    href = f'<a href="data:application/pdf;base64,{b64}" download="Nitrogen_Budget_Report.pdf">\U0001F4C5 Click here to download PDF</a>'
+    href = f'<a href="data:application/pdf;base64,{b64}" target="_blank">\U0001F4C5 View PDF Report in Browser</a>'
     st.markdown(href, unsafe_allow_html=True)
 
     # Clean up temp chart image
