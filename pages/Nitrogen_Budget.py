@@ -1,5 +1,8 @@
 import streamlit as st
 import pandas as pd
+from fpdf import FPDF
+import base64
+from io import BytesIO
 
 # --- Branding ---
 st.image("sca_logo.jpg", use_container_width=True)
@@ -80,7 +83,6 @@ uan_n_cost = uan_price / 320    # 32% N
 urea_total_cost = in_season_n * urea_n_cost
 uan_total_cost = in_season_n * uan_n_cost
 
-# Break-even kg grain/ha
 grain_price_per_kg = grain_price / 1000
 urea_break_even_kg = urea_total_cost / grain_price_per_kg
 uan_break_even_kg = uan_total_cost / grain_price_per_kg
@@ -96,6 +98,54 @@ with col6:
     st.metric("UAN N Cost ($/kg N)", f"${uan_n_cost:.2f}")
     st.metric("UAN Total Cost ($/ha)", f"${uan_total_cost:.2f}")
     st.metric("UAN Break-even Yield (kg/ha)", f"{uan_break_even_kg:.0f}")
+
+# --- PDF Export ---
+class PDF(FPDF):
+    def header(self):
+        self.set_font("Arial", 'B', 12)
+        self.cell(0, 10, "Nitrogen Budget Report", ln=True, align='C')
+        self.ln(10)
+
+    def chapter_title(self, title):
+        self.set_font("Arial", 'B', 10)
+        self.cell(0, 10, title, ln=True)
+
+    def chapter_body(self, text):
+        self.set_font("Arial", '', 10)
+        self.multi_cell(0, 8, text)
+        self.ln()
+
+if st.button("📄 Download PDF Report"):
+    pdf = PDF()
+    pdf.add_page()
+
+    pdf.chapter_title("1. Yield Expectations")
+    pdf.chapter_body(f"Crop Type: {crop_type}\nExpected Yield: {yield_t_ha} t/ha\n{label}: {protein_or_oil}%\nNUE: {nue}")
+
+    pdf.chapter_title("2. Soil Test Data")
+    pdf.chapter_body(f"Nitrate: {nitrate} mg/kg\nAmmonia: {ammonia} mg/kg\nOrganic N Pool: {organic_n} kg/ha")
+
+    pdf.chapter_title("3. Rainfall")
+    pdf.chapter_body(f"Station: {station_code}\nRainfall: {rain}")
+
+    pdf.chapter_title("4. Nitrogen Summary")
+    pdf.chapter_body(f"Total N Required: {n_total_required:.1f} kg/ha\nSoil N Contribution: {soil_n:.1f} kg/ha\nIn-season N Required: {in_season_n:.1f} kg/ha")
+
+    pdf.chapter_title("5. ROI Assumptions & Break-even Analysis")
+    pdf.chapter_body(
+        f"Grain Price: ${grain_price}/t\n"
+        f"Urea Price: ${urea_price}/t (46% N)\n"
+        f"UAN Price: ${uan_price}/t (32% N)\n\n"
+        f"Urea Cost: ${urea_total_cost:.2f}/ha | Break-even Yield: {urea_break_even_kg:.0f} kg/ha\n"
+        f"UAN Cost: ${uan_total_cost:.2f}/ha | Break-even Yield: {uan_break_even_kg:.0f} kg/ha"
+    )
+
+    # Export as download link
+    buffer = BytesIO()
+    pdf.output(buffer)
+    b64 = base64.b64encode(buffer.getvalue()).decode()
+    href = f'<a href="data:application/octet-stream;base64,{b64}" download="Nitrogen_Budget_Report.pdf">📥 Click here to download PDF</a>'
+    st.markdown(href, unsafe_allow_html=True)
 
 # --- Footer ---
 st.markdown("---")
