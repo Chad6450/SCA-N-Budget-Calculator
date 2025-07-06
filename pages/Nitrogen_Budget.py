@@ -146,14 +146,14 @@ class PDF(FPDF):
 
         self.set_xy(110, y_start)
         self.set_font("Arial", 'B', 12)
-        self.multi_cell(95, 6, "Nitrogen Summary", border='B')
+        self.multi_cell(95, 6, "Nitrogen Summary", border='B', align='R')
         self.set_font("Arial", '', 10)
-        self.multi_cell(95, 6, summary_text)
+        self.multi_cell(95, 6, summary_text, align='R')
         self.ln(3)
         self.set_font("Arial", 'B', 12)
-        self.multi_cell(95, 6, "ROI & Break-even Analysis", border='B')
+        self.multi_cell(95, 6, "ROI & Break-even Analysis", border='B', align='R')
         self.set_font("Arial", '', 10)
-        self.multi_cell(95, 6, roi_text)
+        self.multi_cell(95, 6, roi_text, align='R')
 
 if st.button("📄 Download PDF Report"):
     pdf = PDF()
@@ -201,7 +201,7 @@ if st.button("📄 Download PDF Report"):
 
     pdf_data = pdf.output(dest='S').encode('latin-1', errors='replace')
     b64 = base64.b64encode(pdf_data).decode()
-    href = f'<a href="data:application/pdf;base64,{b64}" target="_blank">📥 Click here to download PDF</a>'
+    href = f'<a href="data:application/pdf;base64,{b64}" target="_blank">📅 Click here to download PDF</a>'
     st.markdown(href, unsafe_allow_html=True)
 
     os.remove("temp_rain_chart.png")
