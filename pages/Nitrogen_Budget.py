@@ -194,7 +194,7 @@ if st.button("Download PDF Report"):
     )
     pdf.summary_side_by_side("temp_rain_chart.png", yield_info, soil_info, rain, summary, roi)
 
-    pdf_data = pdf.output(dest='S').encode('utf-8')  # UTF-8 to avoid UnicodeEncodeError
+    pdf_data = pdf.output(dest='S').encode('latin-1', errors='replace')
     b64 = base64.b64encode(pdf_data).decode()
     href = f'<a href="data:application/pdf;base64,{b64}" target="_blank">📄 View PDF Report in Browser</a>'
     st.markdown(href, unsafe_allow_html=True)
