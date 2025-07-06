@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import os
 
 # --- Branding ---
-st.image("sca_logo.jpg", width=150)  # Make logo larger
+st.image("sca_logo.jpg", use_container_width=True)  # Full-width logo
 st.markdown("### Nitrogen Budget Calculator – South Coastal Agencies")
 
 # --- Agronomic Inputs ---
@@ -19,13 +19,15 @@ crop_type = st.selectbox("Crop Type", ["Wheat", "Barley", "Oats", "Canola"])
 if crop_type.lower() == "canola":
     label = "Target Oil (%)"
     default_value = 42.0
+    yield_default = 2.0
 else:
     label = "Target Protein (%)"
     default_value = 11.5
+    yield_default = 4.0
 
 col1, col2 = st.columns(2)
 with col1:
-    yield_t_ha = st.number_input("Expected Yield (t/ha)", min_value=0.0, value=4.0, step=0.1)
+    yield_t_ha = st.number_input("Expected Yield (t/ha)", min_value=0.0, value=yield_default, step=0.1)
 with col2:
     protein_or_oil = st.number_input(label, min_value=0.0, value=default_value, step=0.1)
 
@@ -76,8 +78,8 @@ st.metric("In-season N Required (kg/ha)", f"{in_season_n:.1f}")
 st.header("\U0001F4B0 Return on Investment")
 
 grain_price = st.number_input("Grain Price ($/t)", min_value=0.0, value=400.0, step=10.0)
-urea_price = st.number_input("Urea Price ($/t)", min_value=0.0, value=950.0, step=10.0)
-uan_price = st.number_input("UAN Price ($/t)", min_value=0.0, value=600.0, step=10.0)
+urea_price = st.number_input("Urea Price ($/t)", min_value=0.0, value=835.0, step=10.0)
+uan_price = st.number_input("UAN Price ($/t)", min_value=0.0, value=715.0, step=10.0)
 
 # Cost per kg N
 urea_n_cost = urea_price / 460  # 46% N
@@ -94,21 +96,25 @@ uan_break_even_kg = uan_total_cost / grain_price_per_kg
 # --- ROI Output ---
 st.subheader("\U0001F4C8 ROI Comparison")
 col5, col6 = st.columns(2)
+
 with col5:
-    st.metric("Urea N Cost ($/kg N)", f"${urea_n_cost:.2f}")
-    st.metric("Urea Total Cost ($/ha)", f"${urea_total_cost:.2f}")
-    st.metric("Urea Break-even Yield (kg/ha)", f"{urea_break_even_kg:.0f}")
+    st.markdown("**Urea**")
+    st.write(f"**N Cost ($/kg N):** ${urea_n_cost:.2f}")
+    st.write(f"**Total Cost ($/ha):** ${urea_total_cost:.2f}")
+    st.write(f"**Break-even Yield (kg/ha):** {urea_break_even_kg:.0f}")
+
 with col6:
-    st.metric("UAN N Cost ($/kg N)", f"${uan_n_cost:.2f}")
-    st.metric("UAN Total Cost ($/ha)", f"${uan_total_cost:.2f}")
-    st.metric("UAN Break-even Yield (kg/ha)", f"{uan_break_even_kg:.0f}")
+    st.markdown("**UAN**")
+    st.write(f"**N Cost ($/kg N):** ${uan_n_cost:.2f}")
+    st.write(f"**Total Cost ($/ha):** ${uan_total_cost:.2f}")
+    st.write(f"**Break-even Yield (kg/ha):** {uan_break_even_kg:.0f}")
 
 # --- PDF Export ---
 class PDF(FPDF):
     def header(self):
-        self.image("sca_logo.jpg", x=70, y=8, w=70)  # Bigger and centered
-        self.set_font("Arial", 'B', 12)
+        self.image("sca_logo.jpg", x=10, w=190)  # Full width logo
         self.set_y(35)
+        self.set_font("Arial", 'B', 12)
         self.cell(0, 10, "Nitrogen Budget Report", ln=True, align='C')
         self.ln(8)
 
