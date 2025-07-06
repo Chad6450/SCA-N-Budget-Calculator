@@ -110,14 +110,16 @@ st.subheader("\U0001F4C8 ROI Comparison")
 col5, col6 = st.columns(2)
 
 with col5:
-    st.metric("Urea N Cost ($/kg N)", f"${urea_n_cost:.2f}")
-    st.metric("Urea Total Cost ($/ha)", f"${urea_total_cost:.2f}")
-    st.metric("Urea Break-even Yield (kg/ha)", f"{urea_break_even_kg:.0f}")
+    st.markdown("**Urea**")
+    st.metric("N Cost ($/kg N)", f"${urea_n_cost:.2f}")
+    st.metric("Total Cost ($/ha)", f"${urea_total_cost:.2f}")
+    st.metric("Break-even Yield (kg/ha)", f"{urea_break_even_kg:.0f}")
 
 with col6:
-    st.metric("UAN N Cost ($/kg N)", f"${uan_n_cost:.2f}")
-    st.metric("UAN Total Cost ($/ha)", f"${uan_total_cost:.2f}")
-    st.metric("UAN Break-even Yield (kg/ha)", f"{uan_break_even_kg:.0f}")
+    st.markdown("**UAN**")
+    st.metric("N Cost ($/kg N)", f"${uan_n_cost:.2f}")
+    st.metric("Total Cost ($/ha)", f"${uan_total_cost:.2f}")
+    st.metric("Break-even Yield (kg/ha)", f"{uan_break_even_kg:.0f}")
 
 # --- PDF Export ---
 class PDF(FPDF):
