@@ -145,7 +145,7 @@ class PDF(FPDF):
         self.multi_cell(90, 6, f"Yield Expectations\n{yield_text}\n\nSoil Test Data\n{soil_text}\n\nRainfall\nStation: {station_code}\n{rain_text}")
         self.image(rainfall_chart, x=10, y=self.get_y(), w=90)
 
-        self.set_xy(105, y_start)
+        self.set_xy(110, y_start)  # moved from 105 to 110 to fix overlap
         self.set_fill_color(*green_fill)
         self.set_font("Arial", 'B', 10)
         self.multi_cell(95, 6, "Nitrogen Summary", border='B')
