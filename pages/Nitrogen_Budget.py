@@ -168,10 +168,22 @@ if st.button("📄 Download PDF Report"):
     )
     summary = clean_ascii(
         f"Total N Required: {n_total_required:.1f} kg/ha\n"
-        f"Soil N Contribution: {soil_n:_
+        f"Soil N Contribution: {soil_n:.1f} kg/ha\n"
+        f"In-season N Required: {in_season_n:.1f} kg/ha"
+    )
+    roi = clean_ascii(
+        f"Grain Price: ${grain_price}/t\n"
+        f"Urea Price: ${urea_price}/t (46% N)\n"
+        f"UAN Price: ${uan_price}/t (32% N)\n"
+        f"\nUrea Cost: ${urea_total_cost:.2f}/ha\nBreak-even: {urea_break_even_kg:.0f} kg/ha\n"
+        f"UAN Cost: ${uan_total_cost:.2f}/ha\nBreak-even: {uan_break_even_kg:.0f} kg/ha"
+    )
+    pdf.content(yield_info, soil_info, rain, summary, roi)
+    pdf_data = pdf.output(dest='S').encode('latin-1', errors='replace')
+    b64 = base64.b64encode(pdf_data).decode()
+    href = f'<a href="data:application/pdf;base64,{b64}" target="_blank">📥 Click here to download PDF</a>'
+    st.markdown(href, unsafe_allow_html=True)
 
-# PDF export unchanged...
 # --- Footer ---
 st.markdown("---")
 st.caption("Developed in collaboration with South Coastal Agencies")
-
