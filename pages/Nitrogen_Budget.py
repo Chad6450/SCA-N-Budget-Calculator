@@ -11,7 +11,7 @@ st.image("sca_logo.jpg", use_container_width=True)  # Full-width logo
 st.markdown("### Nitrogen Budget Calculator – South Coastal Agencies")
 
 # --- Agronomic Inputs ---
-st.markdown("---")  # Reduced spacing above this header
+st.markdown("---")
 st.header("1. Yield Expectations")
 crop_type = st.selectbox("Crop Type", ["Wheat", "Barley", "Oats", "Canola"])
 
@@ -94,8 +94,8 @@ urea_price = st.number_input("Urea Price ($/t)", min_value=0.0, value=835.0, ste
 uan_price = st.number_input("UAN Price ($/t)", min_value=0.0, value=715.0, step=10.0)
 
 # Cost per kg N
-urea_n_cost = urea_price / 460  # 46% N
-uan_n_cost = uan_price / 320    # 32% N
+urea_n_cost = urea_price / 460
+uan_n_cost = uan_price / 320
 
 # Total cost
 urea_total_cost = in_season_n * urea_n_cost
@@ -110,21 +110,19 @@ st.subheader("\U0001F4C8 ROI Comparison")
 col5, col6 = st.columns(2)
 
 with col5:
-    st.markdown("**Urea**")
-    st.write(f"**N Cost ($/kg N):** ${urea_n_cost:.2f}")
-    st.write(f"**Total Cost ($/ha):** ${urea_total_cost:.2f}")
-    st.write(f"**Break-even Yield (kg/ha):** {urea_break_even_kg:.0f}")
+    st.metric("Urea N Cost ($/kg N)", f"${urea_n_cost:.2f}")
+    st.metric("Urea Total Cost ($/ha)", f"${urea_total_cost:.2f}")
+    st.metric("Urea Break-even Yield (kg/ha)", f"{urea_break_even_kg:.0f}")
 
 with col6:
-    st.markdown("**UAN**")
-    st.write(f"**N Cost ($/kg N):** ${uan_n_cost:.2f}")
-    st.write(f"**Total Cost ($/ha):** ${uan_total_cost:.2f}")
-    st.write(f"**Break-even Yield (kg/ha):** {uan_break_even_kg:.0f}")
+    st.metric("UAN N Cost ($/kg N)", f"${uan_n_cost:.2f}")
+    st.metric("UAN Total Cost ($/ha)", f"${uan_total_cost:.2f}")
+    st.metric("UAN Break-even Yield (kg/ha)", f"{uan_break_even_kg:.0f}")
 
 # --- PDF Export ---
 class PDF(FPDF):
     def header(self):
-        self.image("sca_logo.jpg", x=10, w=190)  # Full width logo
+        self.image("sca_logo.jpg", x=10, w=190)
         self.set_y(35)
         self.set_font("Arial", 'B', 12)
         self.cell(0, 10, "Nitrogen Budget Report", ln=True, align='C')
@@ -163,7 +161,6 @@ if st.button("\U0001F4C4 Download PDF Report"):
     pdf.chapter_title("3. Rainfall")
     pdf.chapter_body(f"Station: {station_code}\nRainfall: {rain}")
 
-    # Create rainfall graph
     plt.figure(figsize=(3.5, 1.5))
     plt.bar(rain_df.index, rain_df["Rainfall (mm)"])
     plt.title(f"Rainfall at {station_code}", fontsize=9)
@@ -177,7 +174,7 @@ if st.button("\U0001F4C4 Download PDF Report"):
     with open("temp_rain_chart.png", "wb") as f:
         f.write(img_buffer.read())
     plt.close()
-    pdf.image("temp_rain_chart.png", x=50, w=100)  # Smaller and centered
+    pdf.image("temp_rain_chart.png", x=50, w=100)
 
     pdf.add_page()
 
@@ -204,7 +201,6 @@ if st.button("\U0001F4C4 Download PDF Report"):
     href = f'<a href="data:application/pdf;base64,{b64}" target="_blank">\U0001F4C4 View PDF Report in Browser</a>'
     st.markdown(href, unsafe_allow_html=True)
 
-    # Clean up temp chart image
     os.remove("temp_rain_chart.png")
 
 # --- Footer ---
