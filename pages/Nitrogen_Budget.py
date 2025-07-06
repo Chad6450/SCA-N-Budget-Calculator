@@ -138,21 +138,33 @@ class PDF(FPDF):
     def summary_side_by_side(self, rainfall_chart, yield_text, soil_text, rain_data, summary_text, roi_text, qr_path):
         self.set_font("Arial", '', 10)
         y_start = self.get_y()
-        self.set_xy(10, y_start)
 
+        # LEFT COLUMN
+        self.set_xy(10, y_start)
         rain_text = "\n".join([f"{month}: {val} mm" for month, val in rain_data.items()])
-        self.multi_cell(90, 6, f"Yield Expectations\n{yield_text}\n\nSoil Test Data\n{soil_text}\n\nRainfall\nStation: {station_code}\n{rain_text}")
+        left_content = (
+            f"Yield Expectations\n{yield_text}\n\n"
+            f"Soil Test Data\n{soil_text}\n\n"
+            f"Rainfall\nStation: {station_code}\n{rain_text}"
+        )
+        self.multi_cell(90, 6, left_content)
         self.image(rainfall_chart, x=10, y=self.get_y(), w=90)
 
-        self.set_xy(115, y_start)
+        # RIGHT COLUMN (explicit alignment)
+        x_right = 115
+        self.set_xy(x_right, y_start)
         self.set_font("Arial", 'B', 10)
-        self.cell(85, 6, "Nitrogen Summary", ln=True, align='L')
+        self.set_x(x_right)
+        self.cell(0, 6, "Nitrogen Summary", ln=True)
         self.set_font("Arial", '', 10)
+        self.set_x(x_right)
         self.multi_cell(85, 6, summary_text)
         self.ln(3)
         self.set_font("Arial", 'B', 10)
-        self.cell(85, 6, "ROI & Break-even Analysis", ln=True, align='L')
+        self.set_x(x_right)
+        self.cell(0, 6, "ROI & Break-even Analysis", ln=True)
         self.set_font("Arial", '', 10)
+        self.set_x(x_right)
         self.multi_cell(85, 6, roi_text)
         self.image(qr_path, x=165, y=260, w=30)
 
