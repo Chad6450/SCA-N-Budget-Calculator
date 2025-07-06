@@ -7,6 +7,10 @@ import matplotlib.pyplot as plt
 import os
 import qrcode
 
+# --- Helper Function ---
+def clean_ascii(text):
+    return text.encode('ascii', errors='replace').decode('ascii')
+
 # --- Branding ---
 st.image("sca_logo.jpg", use_container_width=True)
 st.markdown("### Nitrogen Budget Calculator – South Coastal Agencies")
@@ -178,23 +182,23 @@ if st.button("Download PDF Report"):
     qr_path = "temp_qr_code.png"
     qr.save(qr_path)
 
-    yield_info = (
+    yield_info = clean_ascii(
         f"Crop Type: {crop_type}\n"
         f"Expected Yield: {yield_t_ha:.1f} t/ha\n"
         f"{label}: {protein_or_oil}%\n"
         f"NUE: {nue}"
     )
-    soil_info = (
+    soil_info = clean_ascii(
         f"Nitrate: {nitrate} mg/kg\n"
         f"Ammonia: {ammonia} mg/kg\n"
         f"Organic N Pool: {organic_n:.1f} kg/ha"
     )
-    summary = (
+    summary = clean_ascii(
         f"Total N Required: {n_total_required:.1f} kg/ha\n"
         f"Soil N Contribution: {soil_n:.1f} kg/ha\n"
         f"In-season N Required: {in_season_n:.1f} kg/ha"
     )
-    roi = (
+    roi = clean_ascii(
         f"Grain Price: ${grain_price}/t\n"
         f"Urea Price: ${urea_price}/t (46% N)\n"
         f"UAN Price: ${uan_price}/t (32% N)\n"
