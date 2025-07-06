@@ -131,7 +131,7 @@ class PDF(FPDF):
     def header(self):
         self.image("sca_logo.jpg", x=10, w=190)
         self.set_font("Arial", 'B', 16)
-        self.set_y(30)
+        self.set_y(40)
         self.cell(0, 15, "Nitrogen Budget Report", ln=True, align='C')
         self.ln(4)
 
