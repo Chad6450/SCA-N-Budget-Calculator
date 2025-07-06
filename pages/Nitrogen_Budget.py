@@ -110,13 +110,13 @@ st.subheader("\U0001F4C8 ROI Comparison")
 col5, col6 = st.columns(2)
 
 with col5:
-    st.markdown("### \U0001F4C9 Urea")
+    st.markdown("### Urea")
     st.metric("N Cost ($/kg N)", f"${urea_n_cost:.2f}")
     st.metric("Total Cost ($/ha)", f"${urea_total_cost:.2f}")
     st.metric("Break-even Yield (kg/ha)", f"{urea_break_even_kg:.0f}")
 
 with col6:
-    st.markdown("### \U0001F4CA UAN")
+    st.markdown("### UAN")
     st.metric("N Cost ($/kg N)", f"${uan_n_cost:.2f}")
     st.metric("Total Cost ($/ha)", f"${uan_total_cost:.2f}")
     st.metric("Break-even Yield (kg/ha)", f"{uan_break_even_kg:.0f}")
@@ -132,28 +132,26 @@ class PDF(FPDF):
 
     def summary_side_by_side(self, rainfall_chart, yield_text, soil_text, rain_data, summary_text, roi_text):
         self.set_font("Arial", '', 10)
-        green_fill = (163, 198, 140)  # Nutrien green from logo
+        green_fill = (163, 198, 140)
         y_start = self.get_y()
         self.set_xy(10, y_start)
 
-        # Left side
-        self.multi_cell(90, 6, f"\U0001F4DD Yield Expectations\n{yield_text}\n\n\U0001F52C Soil Test Data\n{soil_text}\n\n\U0001F327 Rainfall\nStation: {station_code}\n{rain_data}")
+        self.multi_cell(90, 6, f"Yield Expectations\n{yield_text}\n\nSoil Test Data\n{soil_text}\n\nRainfall\nStation: {station_code}\n{rain_data}")
         self.image(rainfall_chart, x=10, y=self.get_y(), w=90)
 
-        # Right side
         self.set_xy(110, y_start)
         self.set_fill_color(*green_fill)
         self.set_font("Arial", 'B', 10)
-        self.multi_cell(90, 6, "\U0001F4A1 Nitrogen Summary", border='B')
+        self.multi_cell(90, 6, "Nitrogen Summary", border='B')
         self.set_font("Arial", '', 10)
         self.multi_cell(90, 6, summary_text, border=1, fill=True)
         self.ln(3)
         self.set_font("Arial", 'B', 10)
-        self.multi_cell(90, 6, "\U0001F4B8 ROI & Break-even Analysis", border='B')
+        self.multi_cell(90, 6, "ROI & Break-even Analysis", border='B')
         self.set_font("Arial", '', 10)
         self.multi_cell(90, 6, roi_text, border=1, fill=True)
 
-if st.button("\U0001F4C4 Download PDF Report"):
+if st.button("Download PDF Report"):
     pdf = PDF()
     pdf.add_page()
 
@@ -196,9 +194,9 @@ if st.button("\U0001F4C4 Download PDF Report"):
     )
     pdf.summary_side_by_side("temp_rain_chart.png", yield_info, soil_info, rain, summary, roi)
 
-    pdf_data = pdf.output(dest='S').encode('latin1')
+    pdf_data = pdf.output(dest='S').encode('utf-8')  # UTF-8 to avoid UnicodeEncodeError
     b64 = base64.b64encode(pdf_data).decode()
-    href = f'<a href="data:application/pdf;base64,{b64}" target="_blank">\U0001F4C4 View PDF Report in Browser</a>'
+    href = f'<a href="data:application/pdf;base64,{b64}" target="_blank">📄 View PDF Report in Browser</a>'
     st.markdown(href, unsafe_allow_html=True)
 
     os.remove("temp_rain_chart.png")
