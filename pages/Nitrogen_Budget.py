@@ -82,13 +82,13 @@ soil_n += organic_n * 0.03
 in_season_n = max((n_total_required - soil_n) / nue, 0)
 
 # --- Output Summary ---
-st.header("\U0001F4CA Nitrogen Budget Summary")
+st.header("Nitrogen Budget Summary")
 st.metric("Total N Required (kg/ha)", f"{n_total_required:.1f}")
 st.metric("Soil N Contribution (kg/ha)", f"{soil_n:.1f}")
 st.metric("In-season N Required (kg/ha)", f"{in_season_n:.1f}")
 
 # --- ROI & Break-Even Calculator ---
-st.header("\U0001F4B0 Return on Investment")
+st.header("Return on Investment")
 
 grain_price = st.number_input("Grain Price ($/t)", min_value=0.0, value=grain_price_default, step=10.0)
 urea_price = st.number_input("Urea Price ($/t)", min_value=0.0, value=835.0, step=10.0)
@@ -107,17 +107,17 @@ urea_break_even_kg = urea_total_cost / grain_price_per_kg
 uan_break_even_kg = uan_total_cost / grain_price_per_kg
 
 # --- ROI Output ---
-st.subheader("\U0001F4C8 ROI Comparison")
+st.subheader("ROI Comparison")
 col5, col6 = st.columns(2)
 
 with col5:
-    st.markdown("### 🧪 Urea")
+    st.markdown("### Urea")
     st.metric("N Cost ($/kg N)", f"${urea_n_cost:.2f}")
     st.metric("Total Cost ($/ha)", f"${urea_total_cost:.2f}")
     st.metric("Break-even Yield (kg/ha)", f"{urea_break_even_kg:.0f}")
 
 with col6:
-    st.markdown("### 🧪 UAN")
+    st.markdown("### UAN")
     st.metric("N Cost ($/kg N)", f"${uan_n_cost:.2f}")
     st.metric("Total Cost ($/ha)", f"${uan_total_cost:.2f}")
     st.metric("Break-even Yield (kg/ha)", f"{uan_break_even_kg:.0f}")
@@ -138,18 +138,18 @@ class PDF(FPDF):
         self.set_xy(10, y_start)
 
         rain_text = "\n".join([f"{month}: {val} mm" for month, val in rain_data.items()])
-        self.multi_cell(90, 6, f"📈 Yield Expectations\n{yield_text}\n\n🧪 Soil Test Data\n{soil_text}\n\n🌧 Rainfall\nStation: {station_code}\n{rain_text}")
+        self.multi_cell(90, 6, f"Yield Expectations\n{yield_text}\n\nSoil Test Data\n{soil_text}\n\nRainfall\nStation: {station_code}\n{rain_text}")
         self.image(rainfall_chart, x=10, y=self.get_y(), w=90)
 
         self.set_xy(105, y_start)
         self.set_fill_color(*green_fill)
         self.set_font("Arial", 'B', 10)
-        self.multi_cell(95, 6, "📊 Nitrogen Summary", border='B')
+        self.multi_cell(95, 6, "Nitrogen Summary", border='B')
         self.set_font("Arial", '', 10)
         self.multi_cell(95, 6, summary_text, border=1, fill=True)
         self.ln(3)
         self.set_font("Arial", 'B', 10)
-        self.multi_cell(95, 6, "💰 ROI & Break-even Analysis", border='B')
+        self.multi_cell(95, 6, "ROI & Break-even Analysis", border='B')
         self.set_font("Arial", '', 10)
         self.multi_cell(95, 6, roi_text, border=1, fill=True)
         self.image(qr_path, x=165, y=260, w=30)
@@ -205,7 +205,7 @@ if st.button("Download PDF Report"):
 
     pdf_data = pdf.output(dest='S').encode('latin-1', errors='replace')
     b64 = base64.b64encode(pdf_data).decode()
-    href = f'<a href="data:application/pdf;base64,{b64}" target="_blank">📄 View PDF Report in Browser</a>'
+    href = f'<a href="data:application/pdf;base64,{b64}" target="_blank">View PDF Report in Browser</a>'
     st.markdown(href, unsafe_allow_html=True)
 
     os.remove("temp_rain_chart.png")
