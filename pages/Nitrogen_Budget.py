@@ -130,17 +130,28 @@ class PDF(FPDF):
         self.cell(0, 10, "Nitrogen Budget Report", ln=True, align='C')
         self.ln(4)
 
-    def summary_side_by_side(self, rainfall_chart, rain_data, summary_text, roi_text):
+    def summary_side_by_side(self, rainfall_chart, yield_text, soil_text, rain_data, summary_text, roi_text):
         self.set_font("Arial", '', 10)
-        self.set_fill_color(230, 255, 230)
+        green_fill = (163, 198, 140)  # Nutrien green from logo
         y_start = self.get_y()
         self.set_xy(10, y_start)
-        self.cell(90, 8, f"Station: {station_code}", ln=2)
-        self.multi_cell(90, 6, str(rain_data))
+
+        # Left side
+        self.multi_cell(90, 6, f"1. Yield Expectations\n{yield_text}\n\n2. Soil Test Data\n{soil_text}\n\n3. Rainfall\nStation: {station_code}\n{rain_data}")
         self.image(rainfall_chart, x=10, y=self.get_y(), w=90)
 
+        # Right side with distinct sections
         self.set_xy(110, y_start)
-        self.multi_cell(90, 6, summary_text + "\n\n" + roi_text, border=1, fill=True)
+        self.set_fill_color(*green_fill)
+        self.set_font("Arial", 'B', 10)
+        self.multi_cell(90, 6, "4. Nitrogen Summary", border='B')
+        self.set_font("Arial", '', 10)
+        self.multi_cell(90, 6, summary_text, border=1, fill=True)
+        self.ln(3)
+        self.set_font("Arial", 'B', 10)
+        self.multi_cell(90, 6, "5. ROI Assumptions & Break-even Analysis", border='B')
+        self.set_font("Arial", '', 10)
+        self.multi_cell(90, 6, roi_text, border=1, fill=True)
 
 if st.button("\U0001F4C4 Download PDF Report"):
     pdf = PDF()
@@ -160,6 +171,17 @@ if st.button("\U0001F4C4 Download PDF Report"):
         f.write(img_buffer.read())
     plt.close()
 
+    yield_info = (
+        f"Crop Type: {crop_type}\n"
+        f"Expected Yield: {yield_t_ha:.1f} t/ha\n"
+        f"{label}: {protein_or_oil}%\n"
+        f"NUE: {nue}"
+    )
+    soil_info = (
+        f"Nitrate: {nitrate} mg/kg\n"
+        f"Ammonia: {ammonia} mg/kg\n"
+        f"Organic N Pool: {organic_n:.1f} kg/ha"
+    )
     summary = (
         f"Total N Required: {n_total_required:.1f} kg/ha\n"
         f"Soil N Contribution: {soil_n:.1f} kg/ha\n"
@@ -172,7 +194,7 @@ if st.button("\U0001F4C4 Download PDF Report"):
         f"\nUrea Cost: ${urea_total_cost:.2f}/ha\nBreak-even: {urea_break_even_kg:.0f} kg/ha\n"
         f"UAN Cost: ${uan_total_cost:.2f}/ha\nBreak-even: {uan_break_even_kg:.0f} kg/ha"
     )
-    pdf.summary_side_by_side("temp_rain_chart.png", rain, summary, roi)
+    pdf.summary_side_by_side("temp_rain_chart.png", yield_info, soil_info, rain, summary, roi)
 
     pdf_data = pdf.output(dest='S').encode('latin1')
     b64 = base64.b64encode(pdf_data).decode()
