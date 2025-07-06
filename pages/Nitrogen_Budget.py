@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import os
 
 # --- Branding ---
-st.image("sca_logo.jpg", use_container_width=True)  # Full-width logo
+st.image("sca_logo.jpg", use_container_width=True)
 st.markdown("### Nitrogen Budget Calculator – South Coastal Agencies")
 
 # --- Agronomic Inputs ---
@@ -125,37 +125,26 @@ with col6:
 class PDF(FPDF):
     def header(self):
         self.image("sca_logo.jpg", x=10, w=190)
-        self.ln(25)
+        self.ln(22)
         self.set_font("Arial", 'B', 12)
         self.cell(0, 10, "Nitrogen Budget Report", ln=True, align='C')
-        self.ln(5)
-
-    def chapter_title(self, title):
-        self.set_font("Arial", 'B', 10)
-        self.cell(0, 10, title, ln=True)
-        self.line(10, self.get_y(), 200, self.get_y())
         self.ln(4)
 
-    def chapter_body(self, text):
+    def summary_side_by_side(self, rainfall_chart, rain_data, summary_text, roi_text):
         self.set_font("Arial", '', 10)
-        self.multi_cell(0, 8, text)
-        self.ln()
-
-    def summary_layout(self, left_text, right_text):
+        self.set_fill_color(230, 255, 230)
         y_start = self.get_y()
         self.set_xy(10, y_start)
-        self.set_fill_color(230, 255, 230)
-        self.multi_cell(90, 8, left_text, border=1, fill=True)
+        self.cell(90, 8, f"Station: {station_code}", ln=2)
+        self.multi_cell(90, 6, str(rain_data))
+        self.image(rainfall_chart, x=10, y=self.get_y(), w=90)
+
         self.set_xy(110, y_start)
-        self.multi_cell(90, 8, right_text, border=1, fill=True)
-        self.ln()
+        self.multi_cell(90, 6, summary_text + "\n\n" + roi_text, border=1, fill=True)
 
 if st.button("\U0001F4C4 Download PDF Report"):
     pdf = PDF()
     pdf.add_page()
-
-    pdf.chapter_title("3. Rainfall")
-    pdf.chapter_body(f"Station: {station_code}\nRainfall: {rain}")
 
     plt.figure(figsize=(3.5, 1.5))
     plt.bar(rain_df.index, rain_df["Rainfall (mm)"])
@@ -170,21 +159,20 @@ if st.button("\U0001F4C4 Download PDF Report"):
     with open("temp_rain_chart.png", "wb") as f:
         f.write(img_buffer.read())
     plt.close()
-    pdf.image("temp_rain_chart.png", x=10, w=90)
 
-    left_summary = (
+    summary = (
         f"Total N Required: {n_total_required:.1f} kg/ha\n"
         f"Soil N Contribution: {soil_n:.1f} kg/ha\n"
         f"In-season N Required: {in_season_n:.1f} kg/ha"
     )
-    right_summary = (
+    roi = (
         f"Grain Price: ${grain_price}/t\n"
         f"Urea Price: ${urea_price}/t (46% N)\n"
-        f"UAN Price: ${uan_price}/t (32% N)\n\n"
-        f"Urea Cost: ${urea_total_cost:.2f}/ha\nBreak-even: {urea_break_even_kg:.0f} kg/ha\n"
+        f"UAN Price: ${uan_price}/t (32% N)\n"
+        f"\nUrea Cost: ${urea_total_cost:.2f}/ha\nBreak-even: {urea_break_even_kg:.0f} kg/ha\n"
         f"UAN Cost: ${uan_total_cost:.2f}/ha\nBreak-even: {uan_break_even_kg:.0f} kg/ha"
     )
-    pdf.summary_layout(left_summary, right_summary)
+    pdf.summary_side_by_side("temp_rain_chart.png", rain, summary, roi)
 
     pdf_data = pdf.output(dest='S').encode('latin1')
     b64 = base64.b64encode(pdf_data).decode()
