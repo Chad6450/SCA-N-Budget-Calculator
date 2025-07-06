@@ -125,10 +125,10 @@ with col6:
 class PDF(FPDF):
     def header(self):
         self.image("sca_logo.jpg", x=10, w=190)
-        self.set_y(35)
+        self.ln(25)
         self.set_font("Arial", 'B', 12)
         self.cell(0, 10, "Nitrogen Budget Report", ln=True, align='C')
-        self.ln(8)
+        self.ln(5)
 
     def chapter_title(self, title):
         self.set_font("Arial", 'B', 10)
@@ -141,23 +141,18 @@ class PDF(FPDF):
         self.multi_cell(0, 8, text)
         self.ln()
 
-    def half_page_columns(self, left_text, right_text):
+    def summary_layout(self, left_text, right_text):
         y_start = self.get_y()
         self.set_xy(10, y_start)
-        self.multi_cell(90, 8, left_text, border=1)
+        self.set_fill_color(230, 255, 230)
+        self.multi_cell(90, 8, left_text, border=1, fill=True)
         self.set_xy(110, y_start)
-        self.multi_cell(90, 8, right_text, border=1)
+        self.multi_cell(90, 8, right_text, border=1, fill=True)
         self.ln()
 
 if st.button("\U0001F4C4 Download PDF Report"):
     pdf = PDF()
     pdf.add_page()
-
-    pdf.chapter_title("1. Yield Expectations")
-    pdf.chapter_body(f"Crop Type: {crop_type}\nExpected Yield: {yield_t_ha} t/ha\n{label}: {protein_or_oil}%\nNUE: {nue}")
-
-    pdf.chapter_title("2. Soil Test Data")
-    pdf.chapter_body(f"Nitrate: {nitrate} mg/kg\nAmmonia: {ammonia} mg/kg\nOrganic N Pool: {organic_n} kg/ha")
 
     pdf.chapter_title("3. Rainfall")
     pdf.chapter_body(f"Station: {station_code}\nRainfall: {rain}")
@@ -175,9 +170,8 @@ if st.button("\U0001F4C4 Download PDF Report"):
     with open("temp_rain_chart.png", "wb") as f:
         f.write(img_buffer.read())
     plt.close()
-    pdf.image("temp_rain_chart.png", x=50, w=100)
+    pdf.image("temp_rain_chart.png", x=10, w=90)
 
-    pdf.chapter_title("4. Summary")
     left_summary = (
         f"Total N Required: {n_total_required:.1f} kg/ha\n"
         f"Soil N Contribution: {soil_n:.1f} kg/ha\n"
@@ -190,7 +184,7 @@ if st.button("\U0001F4C4 Download PDF Report"):
         f"Urea Cost: ${urea_total_cost:.2f}/ha\nBreak-even: {urea_break_even_kg:.0f} kg/ha\n"
         f"UAN Cost: ${uan_total_cost:.2f}/ha\nBreak-even: {uan_break_even_kg:.0f} kg/ha"
     )
-    pdf.half_page_columns(left_summary, right_summary)
+    pdf.summary_layout(left_summary, right_summary)
 
     pdf_data = pdf.output(dest='S').encode('latin1')
     b64 = base64.b64encode(pdf_data).decode()
