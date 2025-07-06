@@ -110,13 +110,13 @@ st.subheader("\U0001F4C8 ROI Comparison")
 col5, col6 = st.columns(2)
 
 with col5:
-    st.markdown("### Urea")
+    st.markdown("### 🧪 Urea")
     st.metric("N Cost ($/kg N)", f"${urea_n_cost:.2f}")
     st.metric("Total Cost ($/ha)", f"${urea_total_cost:.2f}")
     st.metric("Break-even Yield (kg/ha)", f"{urea_break_even_kg:.0f}")
 
 with col6:
-    st.markdown("### UAN")
+    st.markdown("### 🧪 UAN")
     st.metric("N Cost ($/kg N)", f"${uan_n_cost:.2f}")
     st.metric("Total Cost ($/ha)", f"${uan_total_cost:.2f}")
     st.metric("Break-even Yield (kg/ha)", f"{uan_break_even_kg:.0f}")
@@ -136,20 +136,20 @@ class PDF(FPDF):
         y_start = self.get_y()
         self.set_xy(10, y_start)
 
-        self.multi_cell(90, 6, f"Yield Expectations\n{yield_text}\n\nSoil Test Data\n{soil_text}\n\nRainfall\nStation: {station_code}\n{rain_data}")
+        self.multi_cell(90, 6, f"📈 Yield Expectations\n{yield_text}\n\n🧪 Soil Test Data\n{soil_text}\n\n🌧 Rainfall\nStation: {station_code}\n{rain_data}")
         self.image(rainfall_chart, x=10, y=self.get_y(), w=90)
 
-        self.set_xy(110, y_start)
+        self.set_xy(105, y_start)
         self.set_fill_color(*green_fill)
         self.set_font("Arial", 'B', 10)
-        self.multi_cell(90, 6, "Nitrogen Summary", border='B')
+        self.multi_cell(95, 6, "📊 Nitrogen Summary", border='B')
         self.set_font("Arial", '', 10)
-        self.multi_cell(90, 6, summary_text, border=1, fill=True)
+        self.multi_cell(95, 6, summary_text, border=1, fill=True)
         self.ln(3)
         self.set_font("Arial", 'B', 10)
-        self.multi_cell(90, 6, "ROI & Break-even Analysis", border='B')
+        self.multi_cell(95, 6, "💰 ROI & Break-even Analysis", border='B')
         self.set_font("Arial", '', 10)
-        self.multi_cell(90, 6, roi_text, border=1, fill=True)
+        self.multi_cell(95, 6, roi_text, border=1, fill=True)
 
 if st.button("Download PDF Report"):
     pdf = PDF()
