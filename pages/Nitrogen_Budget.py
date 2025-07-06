@@ -135,25 +135,41 @@ class PDF(FPDF):
         self.cell(0, 10, "Nitrogen Budget Report", ln=True, align='C')
         self.ln(8)
 
-    def content_side_by_side(self, rainfall_chart, yield_text, soil_text, rain_data, summary_text, roi_text):
+    def summary_side_by_side(self, rainfall_chart, yield_text, soil_text, rain_data, summary_text, roi_text, qr_path):
         self.set_font("Arial", '', 10)
         y_start = self.get_y()
-        self.set_xy(10, y_start)
 
+        # LEFT COLUMN: Agronomic info
+        self.set_xy(10, y_start)
         rain_text = "\n".join([f"{month}: {val} mm" for month, val in rain_data.items()])
-        self.multi_cell(90, 6, f"Yield Expectations\n{yield_text}\n\nSoil Test Data\n{soil_text}\n\nRainfall\nStation: {station_code}\n{rain_text}")
+        left_content = (
+            f"Yield Expectations\n{yield_text}\n\n"
+            f"Soil Test Data\n{soil_text}\n\n"
+            f"Rainfall\nStation: {station_code}\n{rain_text}"
+        )
+        self.multi_cell(90, 6, left_content)
         self.image(rainfall_chart, x=10, y=self.get_y(), w=90)
 
-        self.set_xy(110, y_start)
-        self.set_font("Arial", 'B', 12)
-        self.multi_cell(95, 6, "Nitrogen Summary", border='B', align='R')
+        # RIGHT COLUMN: Summary & ROI (corrected alignment)
+        x_right = 110
+        self.set_xy(x_right, y_start)
+        self.set_font("Arial", 'B', 10)
+        self.set_x(x_right)
+        self.cell(0, 6, "Nitrogen Summary", ln=True)
         self.set_font("Arial", '', 10)
-        self.multi_cell(95, 6, summary_text, align='R')
+        self.set_x(x_right)
+        self.multi_cell(85, 6, summary_text)
         self.ln(3)
-        self.set_font("Arial", 'B', 12)
-        self.multi_cell(95, 6, "ROI & Break-even Analysis", border='B', align='R')
+
+        self.set_font("Arial", 'B', 10)
+        self.set_x(x_right)
+        self.cell(0, 6, "ROI & Break-even Analysis", ln=True)
         self.set_font("Arial", '', 10)
-        self.multi_cell(95, 6, roi_text, align='R')
+        self.set_x(x_right)
+        self.multi_cell(85, 6, roi_text)
+
+        # QR Code at bottom-right
+        self.image(qr_path, x=165, y=260, w=30)
 
 if st.button("📄 Download PDF Report"):
     pdf = PDF()
@@ -173,6 +189,10 @@ if st.button("📄 Download PDF Report"):
     with open("temp_rain_chart.png", "wb") as f:
         f.write(img_buffer.read())
     plt.close()
+
+    qr = qrcode.make("https://sca.agtools.app")
+    qr_path = "temp_qr_code.png"
+    qr.save(qr_path)
 
     yield_info = clean_ascii(
         f"Crop Type: {crop_type}\n"
@@ -197,7 +217,7 @@ if st.button("📄 Download PDF Report"):
         f"\nUrea Cost: ${urea_total_cost:.2f}/ha\nBreak-even: {urea_break_even_kg:.0f} kg/ha\n"
         f"UAN Cost: ${uan_total_cost:.2f}/ha\nBreak-even: {uan_break_even_kg:.0f} kg/ha"
     )
-    pdf.content_side_by_side("temp_rain_chart.png", yield_info, soil_info, rain, summary, roi)
+    pdf.summary_side_by_side("temp_rain_chart.png", yield_info, soil_info, rain, summary, roi, qr_path)
 
     pdf_data = pdf.output(dest='S').encode('latin-1', errors='replace')
     b64 = base64.b64encode(pdf_data).decode()
@@ -205,6 +225,7 @@ if st.button("📄 Download PDF Report"):
     st.markdown(href, unsafe_allow_html=True)
 
     os.remove("temp_rain_chart.png")
+    os.remove(qr_path)
 
 # --- Footer ---
 st.markdown("---")
