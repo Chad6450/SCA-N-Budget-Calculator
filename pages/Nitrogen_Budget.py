@@ -135,25 +135,44 @@ class PDF(FPDF):
         self.cell(0, 10, "Nitrogen Budget Report", ln=True, align='C')
         self.ln(8)
 
-    def content(self, yield_text, soil_text, rain_data, summary_text, roi_text):
+    def content_side_by_side(self, rainfall_chart, yield_text, soil_text, rain_data, summary_text, roi_text):
         self.set_font("Arial", '', 10)
-        self.multi_cell(0, 8, f"Yield Expectations\n{yield_text}\n\nSoil Test Data\n{soil_text}")
-        rain_text = "\n".join([f"{m}: {v} mm" for m, v in rain_data.items()])
-        self.multi_cell(0, 8, f"Rainfall Data\n{rain_text}")
-        self.ln(4)
+        y_start = self.get_y()
+        self.set_xy(10, y_start)
+
+        rain_text = "\n".join([f"{month}: {val} mm" for month, val in rain_data.items()])
+        self.multi_cell(90, 6, f"Yield Expectations\n{yield_text}\n\nSoil Test Data\n{soil_text}\n\nRainfall\nStation: {station_code}\n{rain_text}")
+        self.image(rainfall_chart, x=10, y=self.get_y(), w=90)
+
+        self.set_xy(110, y_start)
         self.set_font("Arial", 'B', 12)
-        self.cell(0, 8, "Nitrogen Summary", ln=True)
+        self.multi_cell(95, 6, "Nitrogen Summary", border='B')
         self.set_font("Arial", '', 10)
-        self.multi_cell(0, 8, summary_text)
-        self.ln(4)
+        self.multi_cell(95, 6, summary_text)
+        self.ln(3)
         self.set_font("Arial", 'B', 12)
-        self.cell(0, 8, "ROI & Break-even Analysis", ln=True)
+        self.multi_cell(95, 6, "ROI & Break-even Analysis", border='B')
         self.set_font("Arial", '', 10)
-        self.multi_cell(0, 8, roi_text)
+        self.multi_cell(95, 6, roi_text)
 
 if st.button("📄 Download PDF Report"):
     pdf = PDF()
     pdf.add_page()
+
+    # Rainfall graph
+    plt.figure(figsize=(3.5, 1.5))
+    plt.bar(rain_df.index, rain_df["Rainfall (mm)"])
+    plt.title(f"Rainfall at {station_code}", fontsize=9)
+    plt.ylabel("mm", fontsize=8)
+    plt.xticks(fontsize=8)
+    plt.yticks(fontsize=8)
+    plt.tight_layout()
+    img_buffer = BytesIO()
+    plt.savefig(img_buffer, format='png')
+    img_buffer.seek(0)
+    with open("temp_rain_chart.png", "wb") as f:
+        f.write(img_buffer.read())
+    plt.close()
 
     yield_info = clean_ascii(
         f"Crop Type: {crop_type}\n"
@@ -178,11 +197,14 @@ if st.button("📄 Download PDF Report"):
         f"\nUrea Cost: ${urea_total_cost:.2f}/ha\nBreak-even: {urea_break_even_kg:.0f} kg/ha\n"
         f"UAN Cost: ${uan_total_cost:.2f}/ha\nBreak-even: {uan_break_even_kg:.0f} kg/ha"
     )
-    pdf.content(yield_info, soil_info, rain, summary, roi)
+    pdf.content_side_by_side("temp_rain_chart.png", yield_info, soil_info, rain, summary, roi)
+
     pdf_data = pdf.output(dest='S').encode('latin-1', errors='replace')
     b64 = base64.b64encode(pdf_data).decode()
     href = f'<a href="data:application/pdf;base64,{b64}" target="_blank">📥 Click here to download PDF</a>'
     st.markdown(href, unsafe_allow_html=True)
+
+    os.remove("temp_rain_chart.png")
 
 # --- Footer ---
 st.markdown("---")
