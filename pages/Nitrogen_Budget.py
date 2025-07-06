@@ -5,6 +5,7 @@ import base64
 from io import BytesIO
 import matplotlib.pyplot as plt
 import os
+import qrcode
 
 # --- Branding ---
 st.image("sca_logo.jpg", use_container_width=True)
@@ -130,7 +131,7 @@ class PDF(FPDF):
         self.cell(0, 10, "Nitrogen Budget Report", ln=True, align='C')
         self.ln(4)
 
-    def summary_side_by_side(self, rainfall_chart, yield_text, soil_text, rain_data, summary_text, roi_text):
+    def summary_side_by_side(self, rainfall_chart, yield_text, soil_text, rain_data, summary_text, roi_text, qr_path):
         self.set_font("Arial", '', 10)
         green_fill = (163, 198, 140)
         y_start = self.get_y()
@@ -150,11 +151,13 @@ class PDF(FPDF):
         self.multi_cell(95, 6, "💰 ROI & Break-even Analysis", border='B')
         self.set_font("Arial", '', 10)
         self.multi_cell(95, 6, roi_text, border=1, fill=True)
+        self.image(qr_path, x=165, y=260, w=30)
 
 if st.button("Download PDF Report"):
     pdf = PDF()
     pdf.add_page()
 
+    # Rainfall graph
     plt.figure(figsize=(3.5, 1.5))
     plt.bar(rain_df.index, rain_df["Rainfall (mm)"])
     plt.title(f"Rainfall at {station_code}", fontsize=9)
@@ -168,6 +171,11 @@ if st.button("Download PDF Report"):
     with open("temp_rain_chart.png", "wb") as f:
         f.write(img_buffer.read())
     plt.close()
+
+    # QR Code
+    qr = qrcode.make("https://sca.agtools.app")
+    qr_path = "temp_qr_code.png"
+    qr.save(qr_path)
 
     yield_info = (
         f"Crop Type: {crop_type}\n"
@@ -192,7 +200,7 @@ if st.button("Download PDF Report"):
         f"\nUrea Cost: ${urea_total_cost:.2f}/ha\nBreak-even: {urea_break_even_kg:.0f} kg/ha\n"
         f"UAN Cost: ${uan_total_cost:.2f}/ha\nBreak-even: {uan_break_even_kg:.0f} kg/ha"
     )
-    pdf.summary_side_by_side("temp_rain_chart.png", yield_info, soil_info, rain, summary, roi)
+    pdf.summary_side_by_side("temp_rain_chart.png", yield_info, soil_info, rain, summary, roi, qr_path)
 
     pdf_data = pdf.output(dest='S').encode('latin-1', errors='replace')
     b64 = base64.b64encode(pdf_data).decode()
@@ -200,6 +208,7 @@ if st.button("Download PDF Report"):
     st.markdown(href, unsafe_allow_html=True)
 
     os.remove("temp_rain_chart.png")
+    os.remove(qr_path)
 
 # --- Footer ---
 st.markdown("---")
