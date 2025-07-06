@@ -15,15 +15,27 @@ st.markdown("---")  # Reduced spacing above this header
 st.header("1. Yield Expectations")
 crop_type = st.selectbox("Crop Type", ["Wheat", "Barley", "Oats", "Canola"])
 
-# Set label and default value based on crop type
+# Set label and default values based on crop type
 if crop_type.lower() == "canola":
     label = "Target Oil (%)"
     default_value = 42.0
     yield_default = 2.0
-else:
+    grain_price_default = 800.0
+elif crop_type.lower() == "barley":
     label = "Target Protein (%)"
     default_value = 11.5
     yield_default = 4.0
+    grain_price_default = 330.0
+elif crop_type.lower() == "oats":
+    label = "Target Protein (%)"
+    default_value = 11.5
+    yield_default = 4.0
+    grain_price_default = 280.0
+else:  # Wheat
+    label = "Target Protein (%)"
+    default_value = 11.5
+    yield_default = 4.0
+    grain_price_default = 350.0
 
 col1, col2 = st.columns(2)
 with col1:
@@ -77,7 +89,7 @@ st.metric("In-season N Required (kg/ha)", f"{in_season_n:.1f}")
 # --- ROI & Break-Even Calculator ---
 st.header("\U0001F4B0 Return on Investment")
 
-grain_price = st.number_input("Grain Price ($/t)", min_value=0.0, value=400.0, step=10.0)
+grain_price = st.number_input("Grain Price ($/t)", min_value=0.0, value=grain_price_default, step=10.0)
 urea_price = st.number_input("Urea Price ($/t)", min_value=0.0, value=835.0, step=10.0)
 uan_price = st.number_input("UAN Price ($/t)", min_value=0.0, value=715.0, step=10.0)
 
