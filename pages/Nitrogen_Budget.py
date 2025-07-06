@@ -141,14 +141,13 @@ class PDF(FPDF):
         self.multi_cell(0, 8, text)
         self.ln()
 
-    def boxed_text(self, title, content):
-        self.set_font("Arial", 'B', 11)
-        self.set_fill_color(240, 240, 240)
-        y = self.get_y()
-        self.rect(10, y, 190, 30)
-        self.set_xy(12, y + 2)
-        self.multi_cell(0, 8, f"{title}\n{content}")
-        self.ln(10)
+    def half_page_columns(self, left_text, right_text):
+        y_start = self.get_y()
+        self.set_xy(10, y_start)
+        self.multi_cell(90, 8, left_text, border=1)
+        self.set_xy(110, y_start)
+        self.multi_cell(90, 8, right_text, border=1)
+        self.ln()
 
 if st.button("\U0001F4C4 Download PDF Report"):
     pdf = PDF()
@@ -178,25 +177,20 @@ if st.button("\U0001F4C4 Download PDF Report"):
     plt.close()
     pdf.image("temp_rain_chart.png", x=50, w=100)
 
-    pdf.add_page()
-
-    pdf.chapter_title("4. Nitrogen Summary")
-    pdf.set_font("Arial", 'B', 12)
-    pdf.set_fill_color(230, 230, 250)
-    pdf.multi_cell(0, 10, f"Total N Required: {n_total_required:.1f} kg/ha\nSoil N Contribution: {soil_n:.1f} kg/ha\nIn-season N Required: {in_season_n:.1f} kg/ha", border=1)
-    pdf.ln(5)
-
-    pdf.chapter_title("5. ROI Assumptions & Break-even Analysis")
-    pdf.set_font("Arial", 'B', 12)
-    pdf.set_fill_color(230, 230, 250)
-    pdf.multi_cell(0, 10,
+    pdf.chapter_title("4. Summary")
+    left_summary = (
+        f"Total N Required: {n_total_required:.1f} kg/ha\n"
+        f"Soil N Contribution: {soil_n:.1f} kg/ha\n"
+        f"In-season N Required: {in_season_n:.1f} kg/ha"
+    )
+    right_summary = (
         f"Grain Price: ${grain_price}/t\n"
         f"Urea Price: ${urea_price}/t (46% N)\n"
         f"UAN Price: ${uan_price}/t (32% N)\n\n"
-        f"Urea Cost: ${urea_total_cost:.2f}/ha | Break-even Yield: {urea_break_even_kg:.0f} kg/ha\n"
-        f"UAN Cost: ${uan_total_cost:.2f}/ha | Break-even Yield: {uan_break_even_kg:.0f} kg/ha",
-        border=1
+        f"Urea Cost: ${urea_total_cost:.2f}/ha\nBreak-even: {urea_break_even_kg:.0f} kg/ha\n"
+        f"UAN Cost: ${uan_total_cost:.2f}/ha\nBreak-even: {uan_break_even_kg:.0f} kg/ha"
     )
+    pdf.half_page_columns(left_summary, right_summary)
 
     pdf_data = pdf.output(dest='S').encode('latin1')
     b64 = base64.b64encode(pdf_data).decode()
