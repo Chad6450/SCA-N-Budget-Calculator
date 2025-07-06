@@ -3,3 +3,5 @@ fpdf
 matplotlib
 pandas
 fpdf2
+qrcode
+
