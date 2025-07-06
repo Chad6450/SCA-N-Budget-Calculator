@@ -126,7 +126,52 @@ with col6:
     st.metric("Total Cost ($/ha)", f"${uan_total_cost:.2f}")
     st.metric("Break-even Yield (kg/ha)", f"{uan_break_even_kg:.0f}")
 
+# --- PDF Export ---
+class PDF(FPDF):
+    def header(self):
+        self.image("sca_logo.jpg", x=10, w=190)
+        self.ln(28)
+        self.set_font("Arial", 'B', 16)
+        self.cell(0, 10, "Nitrogen Budget Report", ln=True, align='C')
+        self.ln(8)
+
+    def content(self, yield_text, soil_text, rain_data, summary_text, roi_text):
+        self.set_font("Arial", '', 10)
+        self.multi_cell(0, 8, f"Yield Expectations\n{yield_text}\n\nSoil Test Data\n{soil_text}")
+        rain_text = "\n".join([f"{m}: {v} mm" for m, v in rain_data.items()])
+        self.multi_cell(0, 8, f"Rainfall Data\n{rain_text}")
+        self.ln(4)
+        self.set_font("Arial", 'B', 12)
+        self.cell(0, 8, "Nitrogen Summary", ln=True)
+        self.set_font("Arial", '', 10)
+        self.multi_cell(0, 8, summary_text)
+        self.ln(4)
+        self.set_font("Arial", 'B', 12)
+        self.cell(0, 8, "ROI & Break-even Analysis", ln=True)
+        self.set_font("Arial", '', 10)
+        self.multi_cell(0, 8, roi_text)
+
+if st.button("📄 Download PDF Report"):
+    pdf = PDF()
+    pdf.add_page()
+
+    yield_info = clean_ascii(
+        f"Crop Type: {crop_type}\n"
+        f"Expected Yield: {yield_t_ha:.1f} t/ha\n"
+        f"{label}: {protein_or_oil}%\n"
+        f"NUE: {nue}"
+    )
+    soil_info = clean_ascii(
+        f"Nitrate: {nitrate} mg/kg\n"
+        f"Ammonia: {ammonia} mg/kg\n"
+        f"Organic N Pool: {organic_n:.1f} kg/ha"
+    )
+    summary = clean_ascii(
+        f"Total N Required: {n_total_required:.1f} kg/ha\n"
+        f"Soil N Contribution: {soil_n:_
+
 # PDF export unchanged...
 # --- Footer ---
 st.markdown("---")
 st.caption("Developed in collaboration with South Coastal Agencies")
+
