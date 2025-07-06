@@ -137,7 +137,8 @@ class PDF(FPDF):
         y_start = self.get_y()
         self.set_xy(10, y_start)
 
-        self.multi_cell(90, 6, f"📈 Yield Expectations\n{yield_text}\n\n🧪 Soil Test Data\n{soil_text}\n\n🌧 Rainfall\nStation: {station_code}\n{rain_data}")
+        rain_text = "\n".join([f"{month}: {val} mm" for month, val in rain_data.items()])
+        self.multi_cell(90, 6, f"📈 Yield Expectations\n{yield_text}\n\n🧪 Soil Test Data\n{soil_text}\n\n🌧 Rainfall\nStation: {station_code}\n{rain_text}")
         self.image(rainfall_chart, x=10, y=self.get_y(), w=90)
 
         self.set_xy(105, y_start)
