@@ -137,7 +137,6 @@ class PDF(FPDF):
 
     def summary_side_by_side(self, rainfall_chart, yield_text, soil_text, rain_data, summary_text, roi_text, qr_path):
         self.set_font("Arial", '', 10)
-        green_fill = (163, 198, 140)
         y_start = self.get_y()
         self.set_xy(10, y_start)
 
@@ -145,17 +144,16 @@ class PDF(FPDF):
         self.multi_cell(90, 6, f"Yield Expectations\n{yield_text}\n\nSoil Test Data\n{soil_text}\n\nRainfall\nStation: {station_code}\n{rain_text}")
         self.image(rainfall_chart, x=10, y=self.get_y(), w=90)
 
-        self.set_xy(115, y_start)  # move box further right
-        self.set_fill_color(*green_fill)
+        self.set_xy(115, y_start)
         self.set_font("Arial", 'B', 10)
-        self.multi_cell(85, 6, "Nitrogen Summary", border='B')
+        self.multi_cell(85, 6, "Nitrogen Summary")
         self.set_font("Arial", '', 10)
-        self.multi_cell(85, 6, summary_text, border=1, fill=True)
+        self.multi_cell(85, 6, summary_text)
         self.ln(3)
         self.set_font("Arial", 'B', 10)
-        self.multi_cell(85, 6, "ROI & Break-even Analysis", border='B')
+        self.multi_cell(85, 6, "ROI & Break-even Analysis")
         self.set_font("Arial", '', 10)
-        self.multi_cell(85, 6, roi_text, border=1, fill=True)
+        self.multi_cell(85, 6, roi_text)
         self.image(qr_path, x=165, y=260, w=30)
 
 if st.button("Download PDF Report"):
