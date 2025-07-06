@@ -130,9 +130,9 @@ with col6:
 class PDF(FPDF):
     def header(self):
         self.image("sca_logo.jpg", x=10, w=190)
-        self.ln(22)
-        self.set_font("Arial", 'B', 12)
-        self.cell(0, 10, "Nitrogen Budget Report", ln=True, align='C')
+        self.set_font("Arial", 'B', 16)
+        self.set_y(18)
+        self.cell(0, 15, "Nitrogen Budget Report", ln=True, align='C')
         self.ln(4)
 
     def summary_side_by_side(self, rainfall_chart, yield_text, soil_text, rain_data, summary_text, roi_text, qr_path):
