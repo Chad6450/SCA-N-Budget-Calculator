@@ -22,38 +22,51 @@ st.image("sca_logo.jpg", use_container_width=True)
 st.markdown("<h2 style='color:#1a4d2e;'>🌿 Nitrogen Budget Calculator – South Coastal Agencies</h2>", unsafe_allow_html=True)
 
 # --- Apply Brand Colors in CSS ---
-    # Custom CSS for smaller input boxes
-    st.markdown("""
-        <style>
-        .small-input label {
-            font-size: 0.85em;
-        }
-        .small-input .stNumberInput > div {
-            max-width: 120px;
-        }
-        </style>
-    """, unsafe_allow_html=True)
+st.markdown("""
+    <style>
+    :root {
+        --sca-primary: #1a4d2e;
+        --sca-accent: #81b29a;
+        --sca-light: #ffffff;
+        --sca-dark: #264027;
+    }
 
-    rain = {}
-    month_labels = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
-                    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+    .stApp {
+        background-color: var(--sca-light);
+        color: var(--sca-dark);
+    }
 
-    rows = [month_labels[i:i+4] for i in range(0, 12, 4)]  # 3 rows of 4 months
+    h1, h2, h3, h4, h5, h6, .stMarkdown h2 {
+        color: var(--sca-primary) !important;
+    }
 
-    for row in rows:
-        cols = st.columns(len(row))
-        for i, month in enumerate(row):
-            with cols[i]:
-                with st.container():
-                    st.markdown('<div class="small-input">', unsafe_allow_html=True)
-                    rain[month] = st.number_input(
-                        f"{month}", 
-                        min_value=0.0, 
-                        value=20.0, 
-                        step=1.0,
-                        key=f"manual_rain_{month}"
-                    )
-                    st.markdown('</div>', unsafe_allow_html=True)
+    .stButton>button {
+        background-color: var(--sca-primary);
+        color: white;
+        border-radius: 8px;
+        padding: 0.4em 1em;
+        border: none;
+    }
+    .stButton>button:hover {
+        background-color: var(--sca-accent);
+        color: white;
+    }
+
+    .small-input label, .compact-input label {
+        font-size: 0.85em;
+        color: var(--sca-dark);
+    }
+
+    .small-input .stNumberInput > div,
+    .compact-input .stNumberInput > div {
+        max-width: 120px;
+        background-color: var(--sca-accent);
+        border: 1px solid var(--sca-primary);
+        border-radius: 4px;
+        padding: 2px;
+    }
+    </style>
+""", unsafe_allow_html=True)
 
 # --- Agronomic Inputs ---
 st.markdown("---")
