@@ -1,7 +1,10 @@
+from afren_rules import check_afren_compliance
+
 def assess_sclerotinia_risk(temp, rh, rain, days_since_rain, leaf_wetness_hours,
                              rain_days_last_week, seed_dressed, prior_fungicide_applied,
                              selected_seed_treatment, selected_prior_fungicide, crop_stage):
     score = 0
+
     if temp >= 13:
         score += 1
     if temp >= 16:
@@ -28,6 +31,7 @@ def assess_sclerotinia_risk(temp, rh, rain, days_since_rain, leaf_wetness_hours,
         score -= 1
     if crop_stage in ["50% Flower", "Petal Drop"]:
         score += 1
+
     if score >= 5:
         risk = "High"
         reco = "Spray Immediately"
@@ -37,80 +41,44 @@ def assess_sclerotinia_risk(temp, rh, rain, days_since_rain, leaf_wetness_hours,
     else:
         risk = "Low"
         reco = "Continue to Monitor"
-    return {
-        "risk_level": risk,
-        "recommendation": reco,
-        "fungicide_options": [
-            {"name": "Prosaro", "group": "3 (DMI)", "persistence": "Moderate"},
-            {"name": "Miravis Star", "group": "3+7 (DMI+SDHI)", "persistence": "High"},
-            {"name": "Aviator Xpro", "group": "3+11 (DMI+QoI)", "persistence": "Moderate"}
-        ]
-    }
 
-def assess_septoria_risk(temp, rh, rain, days_since_rain, leaf_wetness_hours,
-                          rain_days_last_week, seed_dressed, prior_fungicide_applied,
-                          selected_seed_treatment, selected_prior_fungicide, crop_stage):
-    score = 0
-    if rain_days_last_week >= 3:
-        score += 2
-    elif rain_days_last_week == 2:
-        score += 1
-    if temp >= 7:
-        score += 1
-    if leaf_wetness_hours >= 20:
-        score += 2
-    if not seed_dressed:
-        score += 0.5
-    if not prior_fungicide_applied:
-        score += 0.5
-    if score >= 4:
-        risk = "High"
-        reco = "Spray Immediately"
-    elif score >= 2:
-        risk = "Moderate"
-        reco = "Consider a Spray Soon"
-    else:
-        risk = "Low"
-        reco = "Continue to Monitor"
-    return {
-        "risk_level": risk,
-        "recommendation": reco,
-        "fungicide_options": [
-            {"name": "Radial", "group": "3+11", "persistence": "High"},
-            {"name": "Opus", "group": "3 (DMI)", "persistence": "Moderate"}
-        ]
-    }
+    all_options = [
+        {"name": "Prosaro", "group": "3 (DMI)", "persistence": "Moderate"},
+        {"name": "Miravis Star", "group": "3+7 (DMI+SDHI)", "persistence": "High"},
+        {"name": "Aviator Xpro", "group": "3+11 (DMI+QoI)", "persistence": "Moderate"}
+    ]
 
-def assess_rust_risk(temp, rh, crop_stage, has_resistance,
-                     seed_dressed, prior_fungicide_applied,
-                     selected_seed_treatment, selected_prior_fungicide):
-    score = 0
-    if 10 <= temp <= 25:
-        score += 2
-    if rh >= 70:
-        score += 1
-    if any(stage in crop_stage.lower() for stage in ["flag", "boot", "flower"]):
-        score += 1
-    if not has_resistance:
-        score += 1
-    if not seed_dressed:
-        score += 0.5
-    if not prior_fungicide_applied:
-        score += 0.5
-    if score >= 4:
-        risk = "High"
-        reco = "Spray Immediately"
-    elif score >= 2:
-        risk = "Moderate"
-        reco = "Consider a Spray Soon"
-    else:
-        risk = "Low"
-        reco = "Continue to Monitor"
+    sdhis_used = any("sdhi" in s.lower() or "group 7" in s.lower()
+                     for s in [selected_seed_treatment, selected_prior_fungicide])
+    group_3_used = any("group 3" in s.lower() or "dmi" in s.lower()
+                       for s in [selected_seed_treatment, selected_prior_fungicide])
+    group_11_used = any("group 11" in s.lower() or "qoi" in s.lower()
+                        for s in [selected_seed_treatment, selected_prior_fungicide])
+
+    warnings = check_afren_compliance(
+        crop="Canola",
+        disease="sclerotinia",
+        total_sprays=2 if prior_fungicide_applied else 1,
+        sdhis_used=sdhis_used,
+        previous_moa=selected_prior_fungicide,
+        current_moa=" + ".join(set(f["group"] for f in all_options)),
+        total_group_3_sprays=1 if group_3_used else 0,
+        total_group_7_sprays=1 if sdhis_used else 0,
+        total_group_11_sprays=1 if group_11_used else 0,
+        blackleg_group_same_as_last_year=False,
+        same_crop_last_2_years=False,
+        variety_resistance_rating="moderate",
+        disease_visible=False,
+        fungicide_type="foliar",
+        rain_forecast_hours=0
+    )
+
+    # Filter out SDHI options if already used
+    filtered_options = [f for f in all_options if not (sdhis_used and "SDHI" in f["group"])]
+
     return {
         "risk_level": risk,
         "recommendation": reco,
-        "fungicide_options": [
-            {"name": "Tilt", "group": "3 (DMI)", "persistence": "Low"},
-            {"name": "Trivapro", "group": "3+7+11", "persistence": "High"}
-        ]
+        "warnings": warnings,
+        "fungicide_options": filtered_options
     }
