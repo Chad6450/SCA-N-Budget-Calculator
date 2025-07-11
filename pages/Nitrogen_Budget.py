@@ -22,69 +22,39 @@ st.image("sca_logo.jpg", use_container_width=True)
 st.markdown("<h2 style='color:#1a4d2e;'>🌿 Nitrogen Budget Calculator – South Coastal Agencies</h2>", unsafe_allow_html=True)
 
 # --- Apply Brand Colors in CSS ---
-st.markdown("""
-    <style>
-    html, body, .main {
-        max-width: 100%;
-        padding: 0;
-        margin: 0;
-    }
-
-    .reportview-container .markdown-text-container {
-        font-family: 'Arial';
-        color: #1a4d2e;
-    }
-
-    h1, h2, h3 {
-        color: #1a4d2e;
-    }
-
-    .stButton>button {
-        background-color: #1a4d2e;
-        color: white;
-        border-radius: 8px;
-        padding: 0.5em 1.5em;
-        font-weight: 600;
-    }
-
-    .stButton>button:hover {
-        background-color: #3a7759;
-    }
-
-    /* Input fields */
-    input[type="text"], input[type="number"], textarea, .stNumberInput input {
-        background-color: #e8f5e9 !important;
-        color: #1a4d2e !important;
-        border-radius: 6px !important;
-    }
-
-    /* Select boxes */
-    div[data-baseweb="select"] > div {
-        background-color: #e8f5e9 !important;
-        color: #1a4d2e !important;
-        border-radius: 6px !important;
-    }
-
-    /* Card layout for sections */
-    .card {
-        background-color: #e8f5e9;
-        border-left: 6px solid #1a4d2e;
-        padding: 20px;
-        margin-bottom: 20px;
-        border-radius: 10px;
-    }
-
-    @media (max-width: 768px) {
-        .card {
-            padding: 10px;
+    # Custom CSS for smaller input boxes
+    st.markdown("""
+        <style>
+        .small-input label {
+            font-size: 0.85em;
         }
-
-        .stButton>button {
-            width: 100%;
+        .small-input .stNumberInput > div {
+            max-width: 120px;
         }
-    }
-    </style>
-""", unsafe_allow_html=True)
+        </style>
+    """, unsafe_allow_html=True)
+
+    rain = {}
+    month_labels = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
+                    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+
+    rows = [month_labels[i:i+4] for i in range(0, 12, 4)]  # 3 rows of 4 months
+
+    for row in rows:
+        cols = st.columns(len(row))
+        for i, month in enumerate(row):
+            with cols[i]:
+                with st.container():
+                    st.markdown('<div class="small-input">', unsafe_allow_html=True)
+                    rain[month] = st.number_input(
+                        f"{month}", 
+                        min_value=0.0, 
+                        value=20.0, 
+                        step=1.0,
+                        key=f"manual_rain_{month}"
+                    )
+                    st.markdown('</div>', unsafe_allow_html=True)
+
 # --- Agronomic Inputs ---
 st.markdown("---")
 st.header("1. 🌾 Yield Expectations")
