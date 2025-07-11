@@ -181,25 +181,34 @@ if rainfall_input_mode == "Use DPIRD API":
     rain = get_rainfall(station_code)
     rain_source = f"DPIRD Station Code: {station_code}"
 else:
+   else:
+    st.markdown("<style>.compact-input label { font-size: 0.85em; }</style>", unsafe_allow_html=True)
     rain = {}
     month_labels = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
-    rows = [month_labels[i:i+4] for i in range(0, 12, 4)]
+    rows = [month_labels[i:i+4] for i in range(0, 12, 4)]  # 3 rows of 4 months each
 
     for row in rows:
         cols = st.columns(4)
         for i, month in enumerate(row):
             with cols[i]:
-                rain[month] = st.number_input(f"{month}", min_value=0.0, value=20.0, key=f"rain_{month}")
+                st.markdown('<div class="compact-input">', unsafe_allow_html=True)
+                rain[month] = st.number_input(
+                    f"{month}", 
+                    min_value=0.0, 
+                    value=20.0, 
+                    key=f"rain_{month}"
+                )
+                st.markdown('</div>', unsafe_allow_html=True)
+
     station_code = "Manual Entry"
     rain_source = "Manual rainfall entry"
 
-rain_df = pd.DataFrame.from_dict(rain, orient="index", columns=["Rainfall (mm)"]).reindex(month_labels)
+    rain_df = pd.DataFrame.from_dict(rain, orient="index", columns=["Rainfall (mm)"]).reindex(month_labels)
 
-if rainfall_input_mode == "Use DPIRD API":
-    st.write(rain_df)
-else:
     st.subheader("📊 Rainfall Chart")
     st.bar_chart(rain_df)
+
+    
 
 # --- Calculations ---
 n_per_tonne = 25.0
