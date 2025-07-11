@@ -42,12 +42,12 @@ seed_treatments = [
 
 foliar_fungicides = [
     "None",
-    "Prosaro",
-    "Aviator Xpro",
-    "Miravis Star",
-    "Tilt",
-    "Elatus Ace",
-    "Opera",
+    "Prosaro (Group 3 - DMI)",
+    "Aviator Xpro (Group 3+11 - DMI+QoI)",
+    "Miravis Star (Group 3+7 - DMI+SDHI)",
+    "Tilt (Group 3 - DMI)",
+    "Elatus Ace (Group 7+3 - SDHI+DMI)",
+    "Opera (Group 11+3 - QoI+DMI)",
     "Other"
 ]
 
