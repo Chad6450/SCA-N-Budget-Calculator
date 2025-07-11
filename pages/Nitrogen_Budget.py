@@ -19,7 +19,9 @@ def clean_ascii(text):
 
 # --- Branding ---
 st.image("sca_logo.jpg", use_container_width=True)
-st.markdown("<h2 style='color:#1a4d2e;'>🌿 Nitrogen Budget Calculator – South Coastal Agencies</h2>", unsafe_allow_html=True)
+st.markdown("""
+    <h2 style='color:#1a4d2e; text-align:center;'>🌿 Nitrogen Budget Calculator<br>South Coastal Agencies</h2>
+""", unsafe_allow_html=True)
 
 # --- Apply Brand Colors in CSS ---
 st.markdown("""
@@ -68,6 +70,21 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
+# --- Monthly Rainfall Weightings (indicative) ---
+rainfall_weightings = {
+    "Jan": 0.1, "Feb": 0.1, "Mar": 0.2, "Apr": 0.6,
+    "May": 0.8, "Jun": 1.0, "Jul": 1.0, "Aug": 0.9,
+    "Sep": 0.7, "Oct": 0.5, "Nov": 0.2, "Dec": 0.1
+}
+
+# --- Weighted Rainfall Function ---
+def weighted_effective_rainfall(rain_dict):
+    return sum(rain_dict.get(month, 0) * rainfall_weightings.get(month, 0) for month in rainfall_weightings)
+
+# --- Organic Carbon to Organic N Conversion Function ---
+def convert_organic_c_to_n(organic_carbon_percent):
+    return organic_carbon_percent * 1100
+
 # --- Agronomic Inputs ---
 st.markdown("---")
 st.header("1. 🌾 Yield Expectations")
@@ -106,41 +123,35 @@ uan_price = st.number_input("UAN Price ($/t)", min_value=0.0, value=725.0, step=
 
 nue = st.slider("Nitrogen Use Efficiency (NUE)", min_value=0.1, max_value=1.0, value=0.6, step=0.05)
 
-# --- Additional Nitrogen Calculations ---
+urea_cost_per_unit = urea_price / 460
+uan_cost_per_unit = uan_price / 320
+
+grain_price_per_kg = grain_price / 1000
+
 n_per_tonne = 25.0
 adjusted_n = (protein_or_oil / 11.5) * n_per_tonne
 n_total_required = yield_t_ha * adjusted_n
-soil_n = 50.0  # Placeholder for now
-in_season_n = max((n_total_required - soil_n) / nue, 0)
 
-urea_cost_per_unit = urea_price / 460
-uan_cost_per_unit = uan_price / 320
-urea_total_cost = in_season_n * urea_cost_per_unit
-uan_total_cost = in_season_n * uan_cost_per_unit
-grain_price_per_kg = grain_price / 1000
-urea_break_even_kg = urea_total_cost / grain_price_per_kg
-uan_break_even_kg = uan_total_cost / grain_price_per_kg
-
-roi = clean_ascii(
-    f"Grain Price: ${grain_price:.2f}/t\n"
-    f"Urea Price: ${urea_price:.2f}/t (46% N)\n"
-    f"UAN Price: ${uan_price:.2f}/t (32% N)\n"
-    f"\nUrea Cost: ${urea_total_cost:.2f}/ha\n"
-    f"Urea N Cost: ${urea_cost_per_unit:.2f}/kg N\n"
-    f"Urea Break-even: {urea_break_even_kg:.0f} kg/ha\n"
-    f"\nUAN Cost: ${uan_total_cost:.2f}/ha\n"
-    f"UAN N Cost: ${uan_cost_per_unit:.2f}/kg N\n"
-    f"UAN Break-even: {uan_break_even_kg:.0f} kg/ha"
-)
 # --- Soil Test Inputs ---
 st.header("2. 📉 Soil Test Data")
 col3, col4 = st.columns(2)
 with col3:
     nitrate = st.number_input("Nitrate-N (mg/kg)", min_value=0.0, value=5.0)
+    organic_carbon = st.number_input("Organic Carbon (%)", min_value=0.0, value=1.4)
 with col4:
     ammonia = st.number_input("Ammonia-N (mg/kg)", min_value=0.0, value=2.0)
+    organic_n = convert_organic_c_to_n(organic_carbon)
+    st.metric("Estimated Organic N kg/ha", f"{organic_n:.0f} kg/ha")
 
-organic_n = st.number_input("Organic N Pool (kg/ha)", min_value=0.0, value=1560.0)
+soil_n = (nitrate + ammonia) * 4
+soil_n += organic_n * 0.03
+
+# --- In-Season N and Cost Calculations ---
+in_season_n = max((n_total_required - soil_n) / nue, 0)
+urea_total_cost = in_season_n * urea_cost_per_unit
+uan_total_cost = in_season_n * uan_cost_per_unit
+urea_break_even_kg = urea_total_cost / grain_price_per_kg
+uan_break_even_kg = uan_total_cost / grain_price_per_kg
 
 # --- Legume Contribution ---
 st.header("3. 🌱 Previous Legume Crop")
