@@ -180,8 +180,8 @@ if rainfall_input_mode == "Use DPIRD API":
                 "Jun": 40.0, "Jul": 60.0, "Aug": 55.0, "Sep": 45.0, "Oct": 30.0, "Nov": 34.6, "Dec": 20.6}
     rain = get_rainfall(station_code)
     rain_source = f"DPIRD Station Code: {station_code}"
+
 else:
-   else:
     st.markdown("<style>.compact-input label { font-size: 0.85em; }</style>", unsafe_allow_html=True)
     rain = {}
     month_labels = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
@@ -207,8 +207,6 @@ else:
 
     st.subheader("📊 Rainfall Chart")
     st.bar_chart(rain_df)
-
-    
 
 # --- Calculations ---
 n_per_tonne = 25.0
