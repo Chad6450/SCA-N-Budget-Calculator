@@ -1,36 +1,79 @@
+# -*- coding: utf-8 -*-
 import streamlit as st
-from PIL import Image
 
-# Page config
+# Page configuration
 st.set_page_config(
     page_title="SCA Agronomy Tools",
     page_icon="🌱",
-    layout="centered"
+    layout="centered",
+    initial_sidebar_state="collapsed"
 )
 
 # Logo
 st.image("sca_logo.jpg", use_container_width=True)
 
-# Center content
-with st.container():
-    st.markdown("""
-        <div style='text-align: center;'>
-            <h1>🧮 Agronomy Decision Tools</h1>
-            <p>Welcome to the South Coastal Agencies Agronomy Toolkit. Choose a calculator below:</p>
-        </div>
-    """, unsafe_allow_html=True)
+# Custom CSS styling
+st.markdown("""
+<style>
+.tile-container {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    margin-top: 40px;
+    flex-wrap: wrap;
+}
+.tile-button {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 160px;
+    height: 160px;
+    background-color: #E0F7FA;
+    color: #004D40;
+    text-align: center;
+    border: 2px solid #00897B;
+    border-radius: 20px;
+    font-size: 18px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+.tile-button:hover {
+    background-color: #B2EBF2;
+    border-color: #00796B;
+    color: #00332E;
+}
+.tile-emoji {
+    font-size: 40px;
+    margin-bottom: 10px;
+}
+</style>
+""", unsafe_allow_html=True)
 
-    col1, col2 = st.columns(2, gap="large")
+# Header
+st.markdown("""
+<div style='text-align: center;'>
+    <h1>🧮 Agronomy Decision Tools</h1>
+    <p>Welcome to the South Coastal Agencies Agronomy Toolkit.</p>
+</div>
+""", unsafe_allow_html=True)
 
-    with col1:
-        if st.button("🌾 Nitrogen Budget Calculator"):
-            st.switch_page("pages/Nitrogen_Budget.py")
+# Tool tiles (with working navigation)
+st.markdown("""
+<div class="tile-container">
+   <a href="/nitrogen_budget" class="tile-button">
+        <div class="tile-emoji">🌾</div>
+        <div>Nitrogen Budget</div>
+    </a>
 
-        if st.button("🦠 Fungicide Risk & ROI Tool"):
-            st.switch_page("pages/streamlit_disease_tool.py")  # ✅ Adjust path if needed
+  <a href="/fungicide_decision_tool" class="tile-button">
+        <div class="tile-emoji">🦠</div>
+        <div>Fungicide Tool</div>
+    </a>
+</div>
+""", unsafe_allow_html=True)
 
-    with col2:
-        st.button("🧪 More Tools Coming Soon")
-
+# Footer
 st.markdown("---")
 st.caption("Developed by South Coastal Agencies")
