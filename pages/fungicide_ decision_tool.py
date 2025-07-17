@@ -5,16 +5,9 @@ import pandas as pd
 from datetime import datetime
 
 # Hide sidebar
-st.set_page_config(
-    page_title="Fungicide Decision Tool",
-    page_icon="🦠",
-    layout="centered",
-    initial_sidebar_state="collapsed"
-)
-# Home Button Style
 st.markdown("""
     <div style="text-align: right; margin-top: -50px;">
-        <a href="/home" style="
+        <a href="/Home" style="
             text-decoration: none;
             font-weight: bold;
             font-size: 16px;
