@@ -14,6 +14,12 @@ st.image("sca_logo.jpg", use_container_width=True)
 # Custom CSS styling
 st.markdown("""
 <style>
+/* App background */
+body {
+    background-color: #F0FFF4;
+}
+
+/* Center container and tile layout */
 .tile-container {
     display: flex;
     justify-content: center;
@@ -21,6 +27,8 @@ st.markdown("""
     margin-top: 40px;
     flex-wrap: wrap;
 }
+
+/* Tile button styling */
 .tile-button {
     display: flex;
     flex-direction: column;
@@ -28,7 +36,7 @@ st.markdown("""
     justify-content: center;
     width: 160px;
     height: 160px;
-    background-color: #E0F7FA;
+    background-color: #ffffff; /* White buttons */
     color: #004D40;
     text-align: center;
     border: 2px solid #00897B;
@@ -39,7 +47,7 @@ st.markdown("""
     transition: all 0.2s ease;
 }
 .tile-button:hover {
-    background-color: #B2EBF2;
+    background-color: #e6fff2;
     border-color: #00796B;
     color: #00332E;
 }
@@ -59,7 +67,7 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# Tile layout with icons
+# Tile buttons
 st.markdown("""
 <div class="tile-container">
     <a href="/pages/nitrogen_budget" class="tile-button">
