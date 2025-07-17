@@ -67,7 +67,7 @@ with col1:
     st.page_link("pages/nitrogen_budget.py", label="🌾 Nitrogen Budget")
 
 with col2:
-   st.page_link("pages/fungicide_ decision_tool.py", label="🦠 Fungicide Tool")
+   st.page_link("pages/fungicide_decision_tool.py", label="🦠 Fungicide Tool")
 
 # Footer
 st.markdown("---")

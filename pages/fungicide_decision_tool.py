@@ -1,65 +1,143 @@
 import streamlit as st
 import sys
 import os
+import pandas as pd
 from datetime import datetime
+
+# Hide sidebar
+st.markdown("""
+    <div style="text-align: right; margin-top: -50px;">
+        <a href="/Home" style="
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 16px;
+            color: #004D40;
+            border: 2px solid #004D40;
+            padding: 8px 16px;
+            border-radius: 12px;
+            background-color: #E0F2F1;
+            box-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+        ">
+            🏠 Home
+        </a>
+    </div>
+""", unsafe_allow_html=True)
+
+# Enable module imports
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-
-# --- Required Modules ---
 from dpird_weather_fetcher import fetch_weather_from_dpird_live
-from assess_sclerotinia_risk import assess_sclerotinia_risk
-from assess_septoria_risk import assess_septoria_risk
-from assess_rust_risk import assess_rust_risk
-from blackleg_risk_model import evaluate_blackleg_risk  # Assumes this function is available
-from variety_blackleg_data import variety_resistance_ratings  # Assumes this dict is available
+from assess_disease_risks import assess_sclerotinia_risk, assess_septoria_risk, assess_rust_risk
 
-# --- Fungicide Info ---
-fungicide_data = {
-    "Canola": {
-        "blackleg": [
-            {"group": "Group DMI (e.g. Prosaro, Aviator Xpro)", "persistence": "10–21 days", "note": "Protective and curative; apply at 4–6 leaf stage"},
-            {"group": "Group SDHI (e.g. Miravis Star)", "persistence": "21–28 days", "note": "Longer residual, better suited for high pressure situations"}
-        ]
-    }
-}
-
-seed_treatments = [
-    {"name": "None", "group": ""},
-    {"name": "Jockey Stayer", "group": "Group 3 - DMI"},
-    {"name": "Saltro", "group": "Group 7 - SDHI"},
-    {"name": "Other", "group": "Check label"}
-]
-
-foliar_fungicides = [
-    {"name": "None", "group": ""},
-    {"name": "Prosaro", "group": "Group 3 - DMI"},
-    {"name": "Miravis Star", "group": "Group 3+7 - DMI+SDHI"},
-    {"name": "Other", "group": "Check label"}
-]
-
-# --- Streamlit UI ---
+# --- HEADER ---
 st.image("sca_logo.jpg", use_container_width=True)
 st.markdown("### 🦠 Disease Risk & Fungicide Response – South Coastal Agencies")
+# Reference Data
+seed_treatment_lookup = {
+    "None": {"group": "", "moa": ""},
+    "Saltro": {"group": "Group 7", "moa": "SDHI"},
+    "ILeVO": {"group": "Group 7", "moa": "SDHI"},
+    "Flutriafol": {"group": "Group 3", "moa": "DMI"},
+    "Jocky": {"group": "Group 3", "moa": "DMI"},
+    "Vibrance": {"group": "Group 7", "moa": "SDHI"},
+    "EverGol Extend": {"group": "Group 7", "moa": "SDHI"},
+    "EverGol Energy": {"group": "Group 7", "moa": "SDHI"},
+}
 
+foliar_fungicide_lookup = {
+    "None": {"group": "", "moa": ""},
+    "Prothio T": {"group": "Group 3", "moa": "DMI"},
+    "Aviator Xpro": {"group": "Group 3+11", "moa": "DMI + QoI"},
+    "Miravis Star": {"group": "Group 3+7", "moa": "DMI + SDHI"},
+    "Elatus Ace": {"group": "Group 7+11", "moa": "SDHI + QoI"},
+    "Miravis": {"group": "Group 7", "moa": "SDHI"},
+    "Azoxy Xtra": {"group": "Group 11 + 3", "moa": "DMI + QoI"},
+    "Epoxiconazole": {"group": "Group 3", "moa": "DMI"},
+    "Veritas Opti": {"group": "Group 3 + 11 + 29", "moa": "DMI + QoI"},
+}
+
+fungicide_costs = {
+    "Prosaro": {"cost_per_ha": 35, "rate": "150 mL/ha", "action": "Curative + Protective"},
+    "Aviator Xpro": {"cost_per_ha": 38, "rate": "300 mL/ha", "action": "Curative + Protective"},
+    "Miravis Star": {"cost_per_ha": 42, "rate": "500 mL/ha", "action": "Protective"},
+    "Elatus Ace": {"cost_per_ha": 40, "rate": "300 mL/ha", "action": "Protective"},
+    "Miravis": {"cost_per_ha": 36, "rate": "200 mL/ha", "action": "Protective"},
+    "Azoxy Xtra": {"cost_per_ha": 33, "rate": "300 mL/ha", "action": "Curative + Protective"},
+    "Epoxiconazole": {"cost_per_ha": 28, "rate": "250 mL/ha", "action": "Curative"},
+    "Veritas Opti": {"cost_per_ha": 48, "rate": "750 mL/ha", "action": "Protective"},
+}
+
+def count_sdhi_uses(seed_treatment, prior_fungicide):
+    seed_sdhi = "sdhi" in seed_treatment_lookup.get(seed_treatment, {}).get("moa", "").lower()
+    foliar_sdhi = "sdhi" in foliar_fungicide_lookup.get(prior_fungicide, {}).get("moa", "").lower()
+    return int(seed_sdhi) + int(foliar_sdhi)
+
+# Crop type & growth stage
 crop_type = st.selectbox("🌾 Select Crop Type", ["Canola", "Wheat", "Barley"])
+if crop_type == "Canola":
+    variety = st.selectbox("Canola Variety", ["Hunter", "Emu", "4540P", "4520P", "Other"])
+    crop_stage = st.selectbox("Crop Stage", ["2-leaf", "4-leaf", "6-leaf", "10% Flower", "50% Flower", "Petal Drop"])
+elif crop_type == "Wheat":
+    variety = st.selectbox("Wheat Variety", ["Scepter", "Vixen", "Other"])
+    crop_stage = st.selectbox("Crop Stage (Zadoks)", ["Z21", "Z30", "Z39", "Z49", "Z65"])
+else:
+    variety = st.selectbox("Barley Variety", ["La Trobe", "RGT Planet", "Other"])
+    crop_stage = st.selectbox("Crop Stage (Zadoks)", ["Z21", "Z30", "Z39", "Z49", "Z65"])
 
-# --- Weather Section ---
+# Agronomic & Economic Inputs
+st.markdown("### 🌱 Agronomic Details")
+yield_potential = st.number_input("Expected Yield (t/ha)", value=2.5)
+default_grain_price = 850 if crop_type == "Canola" else 350 if crop_type == "Wheat" else 320
+grain_price = st.number_input("Grain Price ($/t)", value=default_grain_price)
+application_cost = st.number_input("Application Cost ($/ha)", value=12.0)
+# Step 1: Ask if disease is already present
+disease_present = st.checkbox("Is disease already present in the crop?")
+
+# Step 2: If yes, show disease types based on crop
+if disease_present:
+    disease_options_by_crop = {
+        "Canola": ["Blackleg", "Sclerotinia"],
+        "Wheat": ["Yellow Spot", "Septoria", "Powdery Mildew", "Rust"],
+        "Barley": ["Net Blotch", "Powdery Mildew", "Rust"]
+    }
+    selected_disease = st.selectbox("Select Disease Type", disease_options_by_crop[crop_type])
+else:
+    selected_disease = None
+
+# Weather
 st.markdown("### ☔️ Environmental Conditions")
 weather_input_mode = st.radio("Select Weather Input Mode", ["Fetch from DPIRD", "Manual Input"])
 if weather_input_mode == "Fetch from DPIRD":
-    station_code = st.text_input("Enter DPIRD Station Code (e.g. ESP, RAV, SAL)", value="ESP")
+    station_code = st.text_input("Enter DPIRD Station Code", value="ESP")
     weather = fetch_weather_from_dpird_live(station_code)
     if "error" in weather:
-        st.error(f"⚠️ Weather fetch failed: {weather['error']}")
-        st.stop()
+        st.warning(f"⚠️ Could not load weather data: {weather['error']}")
+        rain = rh = temp = 0
     else:
         rain = weather["rain_mm"]
         rh = weather["rh_percent"]
         temp = weather["temperature_c"]
 else:
-    months = ["May", "June", "July", "August", "September"]
-    monthly_rain = {m: st.number_input(f"Rainfall in {m} (mm)", min_value=0.0, value=10.0) for m in months}
-    monthly_temp = {m: st.slider(f"Avg Temp in {m} (°C)", -5, 50, 16) for m in months}
-    monthly_rh = {m: st.slider(f"Avg RH in {m} (%)", 0, 100, 75) for m in months}
+    months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
+    def display_weather_inputs(title, key_prefix, min_val, max_val, default_val, step_val):
+        st.subheader(title)
+        values = {}
+        for i in range(0, len(months), 4):
+            cols = st.columns(4)
+            for j, col in enumerate(cols):
+                if i + j < len(months):
+                    month = months[i + j]
+                    with col:
+                        values[month] = st.number_input(
+                            f"{month}", key=f"{key_prefix}_{month}",
+                            min_value=min_val, max_value=max_val,
+                            value=default_val, step=step_val
+                        )
+        return values
+
+    monthly_rain = display_weather_inputs("☔ Rainfall (mm)", "rain", 0.0, 1000.0, 10.0, 1.0)
+    monthly_rh = display_weather_inputs("💧 Relative Humidity (%)", "rh", 0.0, 100.0, 75.0, 1.0)
+    monthly_temp = display_weather_inputs("🌡 Temperature (°C)", "temp", -10.0, 50.0, 16.0, 0.5)
     rain = sum(monthly_rain.values())
     rh = sum(monthly_rh.values()) / len(monthly_rh)
     temp = sum(monthly_temp.values()) / len(monthly_temp)
@@ -68,116 +146,92 @@ st.metric("Total Rainfall (mm)", rain)
 st.metric("Avg Relative Humidity (%)", rh)
 st.metric("Avg Temperature (°C)", temp)
 
-# --- Canola Crop Specific Blackleg Logic ---
-if crop_type == "Canola":
-    st.markdown("### ⚫️ Blackleg Risk Inputs")
+# Seed & prior fungicide selection
+seed_dressed = st.checkbox("Seed Treated?")
+selected_seed_treatment = "None"
+if seed_dressed:
+    seed_options = [f"{name} ({data['group']} – {data['moa']})" for name, data in seed_treatment_lookup.items()]
+    selected_seed_treatment_display = st.selectbox("Select Seed Treatment", seed_options)
+    selected_seed_treatment = selected_seed_treatment_display.split(" (")[0]
 
-    variety = st.selectbox("Canola Variety", list(variety_resistance_ratings.keys()))
-    crop_stage = st.selectbox("Crop Stage", ["2-leaf", "3-leaf", "4-leaf", "5-leaf", "6-leaf", "7-leaf", "8-leaf", "Bolting", "10% Flower", "20% Flower", "50% Flower", "Petal Drop"])
-    yield_potential = st.slider("Estimated Yield Potential (t/ha)", 0.5, 5.0, 2.5, 0.1)
-    grain_price = st.number_input("Grain Price ($/t)", min_value=100.0, value=650.0)
-    fungicide_cost = st.number_input("Fungicide Cost ($/ha)", min_value=0.0, value=35.0)
-    application_cost = st.number_input("Application Cost ($/ha)", min_value=0.0, value=12.0)
-    rain_mm = st.slider("Recent Rainfall (mm)", 0.0, 50.0, 6.0, 0.5)
-    rh_percent = st.slider("Relative Humidity (%)", 0, 100, 85)
-    temperature_c = st.slider("Temperature (°C)", 0, 40, 14)
-    same_group_as_last_year = st.checkbox("Same Blackleg Group Used as Last Year?", value=False)
-    same_crop_2_years = st.checkbox("Same Paddock Grown to Canola Last 2 Years?", value=False)
-    lesions_visible = st.checkbox("Are lesions currently visible on plants?", value=False)
-    rain_forecast_hours = st.slider("Rain Forecast (Next 7 Days - Hours of Rain)", 0, 168, 24)
-    selected_seed_treatment = st.selectbox("Seed Treatment Product", [s["name"] for s in seed_treatments])
-    selected_prior_fungicide = st.selectbox("Prior Foliar Fungicide", [f["name"] for f in foliar_fungicides])
+prior_fungicide = st.checkbox("Foliar Fungicide Applied to Date?")
+selected_prior_fungicide = "None"
+if prior_fungicide:
+    foliar_options = [f"{name} ({data['group']} – {data['moa']})" for name, data in foliar_fungicide_lookup.items()]
+    selected_prior_fungicide_display = st.selectbox("Select Prior Foliar Fungicide", foliar_options)
+    selected_prior_fungicide = selected_prior_fungicide_display.split(" (")[0]
 
-    if st.button("🦠 Assess Blackleg Risk"):
-        inputs = {
-            "variety": variety,
-            "crop_stage": crop_stage,
-            "yield_potential": yield_potential,
-            "grain_price": grain_price,
-            "fungicide_cost": fungicide_cost,
-            "application_cost": application_cost,
-            "rain_mm": rain_mm,
-            "rh_percent": rh_percent,
-            "temperature_c": temperature_c,
-            "same_group_as_last_year": same_group_as_last_year,
-            "same_crop_2_years": same_crop_2_years,
-            "lesions_visible": lesions_visible,
-            "rain_forecast_hours": rain_forecast_hours,
-            "seed_treatment": selected_seed_treatment,
-            "prior_fungicide": selected_prior_fungicide
-        }
+days_since_rain = st.slider("Days Since Last Rain", 0, 14, 3)
+leaf_wetness_hours = st.slider("Leaf Wetness (last 7 days)", 0, 50, 24)
+rain_days_last_week = st.slider("Rain Days Last Week", 0, 7, 3)
 
-        result = evaluate_blackleg_risk(inputs)
-        st.subheader("🧾 Blackleg Risk Result")
-        st.markdown(f"**Blackleg Rating**: {result['blackleg_rating']}")
-        st.markdown(f"**Resistance Group**: {result['blackleg_group']}")
-        st.markdown(f"**Spore Release Risk**: {result['spore_risk']}")
-        st.markdown(f"**Break-even Yield**: {result['break_even_yield']} kg/ha")
-        st.markdown(f"**Recommendation**: {result['recommended_action']}")
-
-        if result.get("warnings"):
-            st.warning("⚠️ AFREN Warnings:")
-            for warn in result["warnings"]:
-                st.markdown(f"- {warn}")
-
-        if result.get("fungicide_options"):
-            st.markdown("### 🧴 Compliant Fungicide Options")
-            for f in result["fungicide_options"]:
-                st.markdown(f"""
-                - **Name**: {f['name']}  
-                  **Group**: {f['group']}  
-                  **Persistence**: {f['persistence']}
-                """)
-
-# --- Other Crops (Wheat/Barley) ---
-else:
-    if crop_type == "Wheat":
-        variety = st.selectbox("Wheat Variety", ["Scepter", "Vixen", "Rockstar", "Calibre", "Other"])
-        disease_type = "yellow_spot"
-        crop_stage = st.selectbox("Crop Stage (Zadoks)", ["Z21 - Tillering", "Z30 - Stem Elongation", "Z39 - Flag Leaf", "Z49 - Booting", "Z65 - Flowering"])
+# --- EVALUATE BUTTON ---
+fungicide_options = []
+if st.button("🧪 Evaluate Disease Risk & Fungicide ROI"):
+    if weather_input_mode == "Fetch from DPIRD" and "error" in weather:
+        st.error("⚠️ Weather data unavailable.")
     else:
-        variety = st.selectbox("Barley Variety", ["La Trobe", "Rosalind", "Maximus", "RGT Planet", "Other"])
-        disease_type = "rust"
-        crop_stage = st.selectbox("Crop Stage (Zadoks)", ["Z21 - Tillering", "Z30 - Stem Elongation", "Z39 - Flag Leaf", "Z49 - Booting", "Z65 - Flowering"])
-
-    seed_dressed = st.checkbox("Was the seed treated with fungicide?")
-    selected_seed_treatment = {"name": "None", "group": ""}
-    if seed_dressed:
-        selected_name = st.selectbox("Select Seed Treatment", [s["name"] for s in seed_treatments])
-        selected_seed_treatment = next(s for s in seed_treatments if s["name"] == selected_name)
-
-    prior_fungicide = st.checkbox("Has a fungicide already been applied this season?")
-    selected_prior_fungicide = {"name": "None", "group": ""}
-    if prior_fungicide:
-        selected_name = st.selectbox("Select Prior Fungicide", [f["name"] for f in foliar_fungicides])
-        selected_prior_fungicide = next(f for f in foliar_fungicides if f["name"] == selected_name)
-
-    days_since_rain = st.slider("Days Since Last Rainfall", 0, 14, 3)
-    leaf_wetness_hours = st.slider("Leaf Wetness (last 7 days)", 0, 50, 24)
-    rain_days_last_week = st.slider("Rain Days in Last Week", 0, 7, 3)
-
-    if st.button("🧪 Evaluate Disease Risk & Fungicide ROI"):
-        if crop_type == "Wheat":
-            result = assess_septoria_risk(temp, rh, rain, days_since_rain, leaf_wetness_hours,
-                                          rain_days_last_week, seed_dressed, prior_fungicide,
-                                          selected_seed_treatment["name"], selected_prior_fungicide["name"], crop_stage)
+        if crop_type == "Canola":
+            result = assess_sclerotinia_risk(temp, rh, rain, days_since_rain, leaf_wetness_hours,
+                rain_days_last_week, seed_dressed, prior_fungicide,
+                selected_seed_treatment, selected_prior_fungicide, crop_stage)
+        elif crop_type == "Wheat":
+            result = assess_septoria_risk(temp, rh, rain, crop_stage, False,
+                seed_dressed, prior_fungicide, selected_seed_treatment, selected_prior_fungicide)
         else:
-            has_resistance = st.checkbox("Does the variety have resistance to rust?", value=False)
-            result = assess_rust_risk(temp, rh, crop_stage, has_resistance,
-                                      seed_dressed, prior_fungicide,
-                                      selected_seed_treatment["name"], selected_prior_fungicide["name"])
+            result = assess_rust_risk(temp, rh, crop_stage, False,
+                seed_dressed, prior_fungicide, selected_seed_treatment, selected_prior_fungicide)
 
         st.markdown("### ✅ Recommendation")
         st.success(result["recommendation"])
         st.info(f"Risk Level: **{result['risk_level']}**")
 
-        st.markdown("### 🧴 Fungicide Options")
-        if result.get("fungicide_options"):
-            for f in result["fungicide_options"]:
-                st.markdown(f"""
-                - **Name**: {f['name']}  
-                  **Group**: {f['group']}  
-                  **Persistence**: {f['persistence']}
-                """)
-        else:
-            st.info("No fungicide recommendations available.")
+        fungicide_options = result.get("fungicide_options", [])
+        if count_sdhi_uses(selected_seed_treatment, selected_prior_fungicide) >= 2:
+            fungicide_options = [
+                f for f in fungicide_options
+                if "SDHI" not in f["group"].upper() and "GROUP 7" not in f["group"].upper()
+            ]
+            st.warning("⚠️ Two SDHI applications already used. SDHI options excluded per AFREN guidelines.")
+
+        # Build table
+        table = []  # ✅ Make sure this line exists
+if disease_present:
+    fungicide_options = [
+        f for f in fungicide_options
+        if "curative" in fungicide_costs.get(f["name"], {}).get("action", "").lower()
+    ]
+
+table = []
+for f in fungicide_options:
+    name = f['name']
+    group = f['group']
+    persistence = f['persistence']
+
+    if name in fungicide_costs:
+        rate = fungicide_costs[name]["rate"]
+        cost = fungicide_costs[name]["cost_per_ha"]
+        action = fungicide_costs[name]["action"]
+        total_cost = cost + application_cost
+        be_yield = total_cost / (grain_price / 1000)
+    else:
+        rate = "-"
+        action = "-"
+        total_cost = 0
+        be_yield = "N/A"
+
+    table.append({
+        "Fungicide": name,
+        "Group": group,
+        "Persistence": persistence,
+        "Rate": rate,
+        "Mode of Action": action,
+        "Cost/ha ($)": f"${total_cost:.2f}",
+        "Break-even Yield (kg/ha)": be_yield if isinstance(be_yield, str) else f"{be_yield:.1f}"
+    })
+
+st.markdown("### 📊 Fungicide Comparison Table")
+st.dataframe(pd.DataFrame(table))
+
+st.markdown("---")
+st.caption("Developed by South Coastal Agencies")
