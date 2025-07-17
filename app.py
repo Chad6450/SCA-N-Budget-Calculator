@@ -43,8 +43,9 @@ st.markdown("""
     border-color: #00796B;
     color: #00332E;
 }
-.tile-emoji {
-    font-size: 40px;
+.tile-button img {
+    width: 50px;
+    height: 50px;
     margin-bottom: 10px;
 }
 </style>
@@ -58,16 +59,19 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# Tool tiles using Streamlit's built-in navigation
-st.markdown("### 🚀 Choose a Tool:")
-
-col1, col2 = st.columns(2)
-
-with col1:
-    st.page_link("pages/nitrogen_budget.py", label="🌾 Nitrogen Budget")
-
-with col2:
-   st.page_link("pages/fungicide_decision_tool.py", label="🦠 Fungicide Tool")
+# Tile layout with icons
+st.markdown("""
+<div class="tile-container">
+    <a href="/pages/nitrogen_budget" class="tile-button">
+        <img src="https://raw.githubusercontent.com/Chad6450/SCA-N-Budget-Calculator/main/home_icon.png" alt="Nitrogen Icon" />
+        Nitrogen Budget
+    </a>
+    <a href="/pages/fungicide_decision_tool" class="tile-button">
+        <img src="https://raw.githubusercontent.com/Chad6450/SCA-N-Budget-Calculator/main/dollar_leaf.png" alt="Fungicide Icon" />
+        Fungicide Tool
+    </a>
+</div>
+""", unsafe_allow_html=True)
 
 # Footer
 st.markdown("---")
