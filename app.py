@@ -53,7 +53,7 @@ st.markdown("""
 # Header
 st.markdown("""
 <div style='text-align: center;'>
-    <h1>🧮 Agronomy Decision Tools</h1>
+    <h1>Agronomy Decision Tools</h1>
     <p>Welcome to the South Coastal Agencies Agronomy Toolkit.</p>
 </div>
 """, unsafe_allow_html=True)
